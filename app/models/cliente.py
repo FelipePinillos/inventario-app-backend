@@ -1,0 +1,18 @@
+from sqlalchemy import Column, Integer, String, Date, BigInteger
+from app.database import Base
+
+
+class Cliente(Base):
+    __tablename__ = "cliente"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nombre = Column(String(100), index=True)
+    apellido = Column(String(100), index=True)
+    dni = Column(String(20), unique=True, index=True)
+    edad = Column(Date)  # Fecha de nacimiento
+    telefono = Column(BigInteger)  # Número entero grande
+    correo = Column(String(100), unique=True, index=True)
+    sexo = Column(String(20))
+    adicional = Column(String(250), nullable=True)
+    avatar = Column(String(250), nullable=True)
+    estado = Column(String(1), default='A')  # A = Activo, I = Inactivo
