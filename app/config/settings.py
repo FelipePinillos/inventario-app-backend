@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
     
     # CORS
-    CORS_ORIGINS: list = ["*"]
+    CORS_ORIGINS: list = ["https://inventario-app-web.vercel.app"]
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: list = ["*"]
     CORS_ALLOW_HEADERS: list = ["*"]
