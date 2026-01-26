@@ -28,7 +28,7 @@ def crear_usuario_db(db: Session, usuario: UsuarioCreate) ->Usuario:
 
     existe = db.query(Usuario).filter(
         or_(Usuario.nombre == usuario.nombre)
-    ).first
+    ).first()
 
     if existe:
         raise ValueError("Ya existe un usuario con ese nombre")
@@ -67,7 +67,10 @@ def actualizar_usuario_db(db: Session, usuario_id: int, datos: UsuarioCreate):
 
     if usuario:
         for key, value in datos.dict().items():
-            setattr(usuario, key, value)
+            if key == "password":
+                usuario.contrasena = value
+            else:
+                setattr(usuario, key, value)
 
         db.commit()
         db.refresh(usuario)

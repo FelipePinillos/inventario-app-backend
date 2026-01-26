@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 
 # PYDANTIC SCHEMAS SIRVE PARA VALIDAR Y
@@ -26,6 +27,7 @@ class UsuarioCreate(UsuarioBase):
 
 
 # Para devolver datos (GET)
+
 class UsuarioResponse(BaseModel):
     id: int
     nombre: str
@@ -33,8 +35,7 @@ class UsuarioResponse(BaseModel):
     dni: str
     tipo_usuario: TipoUsuarioResponse
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 
