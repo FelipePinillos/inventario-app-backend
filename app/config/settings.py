@@ -13,14 +13,13 @@ class Settings(BaseSettings):
     # Para MySQL:
     # "mysql+pymysql://usuario:contraseña@localhost:3306/nombrebasedatos"
     # Para PostgreSQL:
-    # "postgresql+psycopg2://usuario:contraseña@localhost:5432/nombrebasedatos"
+    # "postgresql+psycopg://usuario:contraseña@localhost:5432/nombrebasedatos"
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL",
         # Ejemplo para MySQL:
         #"mysql+pymysql://root@localhost:3306/sistemalibreria"
         # Ejemplo para PostgreSQL:
-        "postgresql+psycopg2://postgres:Inge2020@localhost:5432/sistemalibreria"
-
+        "postgresql+psycopg://postgres:Inge2020@localhost:5432/sistemalibreria"
     )
     
     # JWT
