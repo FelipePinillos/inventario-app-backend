@@ -2,10 +2,8 @@ fastapi==0.115.0
 uvicorn[standard]==0.32.0
 gunicorn==23.0.0
 sqlalchemy==2.0.36
-
-# ¡VERSIÓN CORRECTA PARA PYTHON 3.13!
-psycopg[binary]==3.3.2  # ✅ Última versión
-
+psycopg[binary]==3.3.2
+psycopg2-binary==2.9.10  # <-- ¡AÑADE ESTA LÍNEA!
 pydantic==2.10.3
 pydantic-settings==2.6.1
 python-jose[cryptography]==3.3.0
