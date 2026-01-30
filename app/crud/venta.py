@@ -92,7 +92,7 @@ def get_ventas_by_fecha(
             joinedload(Venta.detalles).joinedload(DetalleVenta.producto),
             joinedload(Venta.detalles).joinedload(DetalleVenta.presentacion)
         )\
-        .filter(Venta.Fecha >= fecha_inicio, Venta.Fecha <= fecha_fin)\
+        .filter(Venta.fecha >= fecha_inicio, Venta.fecha <= fecha_fin)\
         .order_by(Venta.id.desc())\
         .offset(skip)\
         .limit(limit)\
@@ -116,10 +116,10 @@ def crear_venta(db: Session, venta: VentaCreate) -> Venta:
         # 2. Crear la venta
         db_venta = Venta(
             id_cliente=venta.id_cliente,
-            Fecha=venta.Fecha or datetime.now(),
+            fecha=venta.Fecha or datetime.now(),
             descuento=descuento_aplicado,
-            TotalSinDescuento=total_sin_descuento,
-            TotalConDescuento=total_con_descuento,
+            totalsindescuento=total_sin_descuento,
+            totalcondescuento=total_con_descuento,
             id_usuario=venta.id_usuario,
             estado=venta.estado or "CONFIRMADA"
         )

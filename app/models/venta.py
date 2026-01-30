@@ -13,10 +13,10 @@ class Venta(Base):
     
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     id_cliente = Column(Integer, ForeignKey("cliente.id"), nullable=True)
-    Fecha = Column(DateTime, nullable=True)
-    TotalConDescuento = Column(DECIMAL(10, 2), nullable=True)
+    fecha = Column(DateTime, nullable=True)
+    totalcondescuento = Column(DECIMAL(10, 2), nullable=True)
     descuento = Column(DECIMAL(10, 2), nullable=True)
-    TotalSinDescuento = Column(DECIMAL(10, 2), nullable=True)
+    totalsindescuento = Column(DECIMAL(10, 2), nullable=True)
     id_usuario = Column(Integer, ForeignKey("usuario.id"), nullable=True)
     estado = Column(String(15), default="CONFIRMADA", nullable=False)
     

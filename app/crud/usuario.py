@@ -50,7 +50,7 @@ def crear_usuario_db(db: Session, usuario: UsuarioCreate) ->Usuario:
 
 
 def obtener_usuarios_db(db: Session) -> Usuario | None:
-    return db.query(Usuario).options(joinedload(Usuario.tipo_usuario)).all()
+    return db.query(Usuario).options(joinedload(Usuario.tipo_usuario)).order_by(Usuario.id.desc()).all()
 
 
 def obtener_usuario_db(db: Session, usuario_id: int = None, usuario: str = None):

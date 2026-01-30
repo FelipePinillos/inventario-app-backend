@@ -10,9 +10,17 @@ class Settings(BaseSettings):
     """Configuración de la aplicación."""
     
     # Base de datos
+    # Para MySQL:
+    # "mysql+pymysql://usuario:contraseña@localhost:3306/nombrebasedatos"
+    # Para PostgreSQL:
+    # "postgresql+psycopg2://usuario:contraseña@localhost:5432/nombrebasedatos"
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL",
-        "mysql+pymysql://root@localhost:3306/sistemalibreria"
+        # Ejemplo para MySQL:
+        #"mysql+pymysql://root@localhost:3306/sistemalibreria"
+        # Ejemplo para PostgreSQL:
+        "postgresql+psycopg2://postgres:Inge2020@localhost:5432/sistemalibreria"
+
     )
     
     # JWT
@@ -27,7 +35,7 @@ class Settings(BaseSettings):
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
     
     # CORS
-    CORS_ORIGINS: list = ["https://inventario-app-web.vercel.app"]
+    CORS_ORIGINS: list = ["*"]
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: list = ["*"]
     CORS_ALLOW_HEADERS: list = ["*"]
