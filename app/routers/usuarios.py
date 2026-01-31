@@ -10,7 +10,7 @@ from app.crud.usuario import (
     actualizar_usuario_db,
     eliminar_usuario_db,
 )
-from app.schemas.usuario import UsuarioCreate, UsuarioResponse
+from app.schemas.usuario import UsuarioCreate, UsuarioUpdate, UsuarioResponse
 
 router = APIRouter(prefix="/api/v1/usuarios", tags=["usuarios"])
 
@@ -44,18 +44,24 @@ def crear_usuario(
     current_user = Depends(require_admin)
 ):
     """Crea un nuevo usuario (solo admin)."""
-    return crear_usuario_db(db, usuario)
+    try:
+        return crear_usuario_db(db, usuario)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.put("/{usuario_id}", response_model=UsuarioResponse)
 def actualizar_usuario(
     usuario_id: int,
-    usuario_update: UsuarioCreate,
+    usuario_update: UsuarioUpdate,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
     """Actualiza un usuario."""
-    return actualizar_usuario_db(db, usuario_id, usuario_update)
+    try:
+        return actualizar_usuario_db(db, usuario_id, usuario_update)
+    except ValueError as e:
+        raise HTTPException(status_code=404 if "no encontrado" in str(e) else 400, detail=str(e))
 
 
 @router.delete("/{usuario_id}")
@@ -65,5 +71,8 @@ def eliminar_usuario(
     current_user = Depends(require_admin)
 ):
     """Elimina un usuario (solo admin)."""
-    eliminar_usuario_db(db, usuario_id)
-    return {"mensaje": "Usuario eliminado"}
+    try:
+        eliminar_usuario_db(db, usuario_id)
+        return {"mensaje": "Usuario eliminado"}
+    except ValueError as e:
+        raise HTTPException(status_code=404 if "no encontrado" in str(e) else 400, detail=str(e))

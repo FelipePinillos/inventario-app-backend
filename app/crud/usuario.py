@@ -27,11 +27,11 @@ from sqlalchemy import or_ # importar or_ para consultas complejas
 def crear_usuario_db(db: Session, usuario: UsuarioCreate) ->Usuario:
 
     existe = db.query(Usuario).filter(
-        or_(Usuario.nombre == usuario.nombre)
+        Usuario.dni == usuario.dni
     ).first()
 
     if existe:
-        raise ValueError("Ya existe un usuario con ese nombre")
+        raise ValueError("Ya existe un usuario con ese DNI")
     
 
     # db_usuario = Usuario(**usuario.dict())
@@ -62,13 +62,16 @@ def obtener_usuario_db(db: Session, usuario_id: int = None, usuario: str = None)
     return None
 
 
-def actualizar_usuario_db(db: Session, usuario_id: int, datos: UsuarioCreate):
+
+def actualizar_usuario_db(db: Session, usuario_id: int, datos):
     usuario = obtener_usuario_db(db, usuario_id)
 
     if usuario:
-        for key, value in datos.dict().items():
+        data = datos.dict(exclude_unset=True)
+        for key, value in data.items():
             if key == "password":
-                usuario.contrasena = value
+                if value:  # Solo actualizar si se envía un valor no vacío
+                    usuario.contrasena = value
             else:
                 setattr(usuario, key, value)
 
