@@ -58,7 +58,8 @@ def obtener_usuario_db(db: Session, usuario_id: int = None, usuario: str = None)
     if usuario_id:
         return db.query(Usuario).filter(Usuario.id == usuario_id).first()
     elif usuario:
-        return db.query(Usuario).filter(Usuario.nombre == usuario).first()
+        # Ahora usuario es el dni
+        return db.query(Usuario).filter(Usuario.dni == usuario).first()
     return None
 
 

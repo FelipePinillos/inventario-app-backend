@@ -25,11 +25,13 @@ def login(
     - **username**: Nombre del usuario
     - **password**: Contraseña
     """
-    usuario = obtener_usuario_db(db, usuario=form_data.username)
+    # Buscar usuario por dni en vez de por nombre
+    from app.models.usuario import Usuario
+    usuario = db.query(Usuario).filter(Usuario.dni == form_data.username).first()
     if not usuario or not verify_password(form_data.password, usuario.contrasena):
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
     
-    access_token = crear_token({"sub": usuario.nombre})
+    access_token = crear_token({"sub": usuario.dni  })
     return {"access_token": access_token, "token_type": "bearer"}
 
 
