@@ -35,12 +35,16 @@ def crear_usuario_db(db: Session, usuario: UsuarioCreate) ->Usuario:
     
 
     # db_usuario = Usuario(**usuario.dict())
+    from datetime import datetime
     db_usuario = Usuario(
         nombre=usuario.nombre,
         apellido=usuario.apellido,
         dni=usuario.dni,
         contrasena=usuario.password,  # TEMPORAL: Sin hashear (TODO: usar hash_password en producción)
-        id_tipo_usuario=usuario.id_tipo_usuario
+        id_tipo_usuario=usuario.id_tipo_usuario,
+        estado='A',
+        fecha_creacion=datetime.now().isoformat(),
+        fecha_edicion=None
     )
 
     db.add(db_usuario)
@@ -50,16 +54,16 @@ def crear_usuario_db(db: Session, usuario: UsuarioCreate) ->Usuario:
 
 
 def obtener_usuarios_db(db: Session) -> Usuario | None:
-    return db.query(Usuario).options(joinedload(Usuario.tipo_usuario)).order_by(Usuario.id.desc()).all()
+    return db.query(Usuario).options(joinedload(Usuario.tipo_usuario)).filter(Usuario.estado == 'A').order_by(Usuario.id.desc()).all()
 
 
 def obtener_usuario_db(db: Session, usuario_id: int = None, usuario: str = None):
     """Obtener usuario por ID o por nombre."""
     if usuario_id:
-        return db.query(Usuario).filter(Usuario.id == usuario_id).first()
+        return db.query(Usuario).filter(Usuario.id == usuario_id, Usuario.estado == 'A').first()
     elif usuario:
         # Ahora usuario es el dni
-        return db.query(Usuario).filter(Usuario.dni == usuario).first()
+        return db.query(Usuario).filter(Usuario.dni == usuario, Usuario.estado == 'A').first()
     return None
 
 
@@ -68,6 +72,7 @@ def actualizar_usuario_db(db: Session, usuario_id: int, datos):
     usuario = obtener_usuario_db(db, usuario_id)
 
     if usuario:
+        from datetime import datetime
         data = datos.dict(exclude_unset=True)
         for key, value in data.items():
             if key == "password":
@@ -75,7 +80,7 @@ def actualizar_usuario_db(db: Session, usuario_id: int, datos):
                     usuario.contrasena = value
             else:
                 setattr(usuario, key, value)
-
+        usuario.fecha_edicion = datetime.now().isoformat()
         db.commit()
         db.refresh(usuario)
 
@@ -86,8 +91,9 @@ def eliminar_usuario_db(db: Session, usuario_id: int):
     usuario = obtener_usuario_db(db, usuario_id)
 
     if usuario:
-        db.delete(usuario)
+        usuario.estado = 'I'
         db.commit()
+        db.refresh(usuario)
 
     return usuario
 

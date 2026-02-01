@@ -13,6 +13,7 @@ class Cliente(Base):
     telefono = Column(BigInteger)  # Número entero grande
     correo = Column(String(100), unique=True, index=True)
     sexo = Column(String(20))
-    adicional = Column(String(250), nullable=True)
     avatar = Column(String(250), nullable=True)
     estado = Column(String(1), default='A')  # A = Activo, I = Inactivo
+    fecha_creacion = Column(String(25), nullable=False)
+    fecha_edicion = Column(String(25), nullable=True)

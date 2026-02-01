@@ -23,6 +23,7 @@ def crear_cliente_db(db: Session, cliente: ClienteCreate) -> Cliente:
     if cliente_existente_correo:
         raise ValueError("Ya existe un cliente activo con ese correo")
     
+    from datetime import datetime
     db_cliente = Cliente(
         nombre=cliente.nombre,
         apellido=cliente.apellido,
@@ -31,9 +32,10 @@ def crear_cliente_db(db: Session, cliente: ClienteCreate) -> Cliente:
         telefono=cliente.telefono,
         correo=cliente.correo,
         sexo=cliente.sexo,
-        adicional=cliente.adicional,
         avatar=cliente.avatar,
-        estado='A'
+        estado='A',
+        fecha_creacion=datetime.now().isoformat(),
+        fecha_edicion=None
     )
     db.add(db_cliente)
     db.commit()
@@ -111,11 +113,10 @@ def actualizar_cliente_db(db: Session, cliente_id: int, cliente_update: ClienteU
         db_cliente.telefono = cliente_update.telefono
     if cliente_update.sexo is not None:
         db_cliente.sexo = cliente_update.sexo
-    if cliente_update.adicional is not None:
-        db_cliente.adicional = cliente_update.adicional
     if cliente_update.avatar is not None:
         db_cliente.avatar = cliente_update.avatar
-    
+    from datetime import datetime
+    db_cliente.fecha_edicion = datetime.now().isoformat()
     db.commit()
     db.refresh(db_cliente)
     return db_cliente

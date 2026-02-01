@@ -17,6 +17,9 @@ class Usuario(Base):
     apellido = Column(String(100), index=True)
     dni = Column(String(100), unique=True, index=True)
     contrasena = Column(String(200), nullable=False)
+    estado = Column(String(1), default='A', nullable=False)  # 'A' = Activo, 'I' = Inactivo
+    fecha_creacion = Column(String(25), nullable=False)
+    fecha_edicion = Column(String(25), nullable=True)
 
     id_tipo_usuario = Column(Integer, ForeignKey("tipo_usuario.id"), nullable=False)
     tipo_usuario = relationship("TipoUsuario", back_populates="usuarios")
