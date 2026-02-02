@@ -12,7 +12,6 @@ class Producto(Base):
     nombre = Column(String(100), index=True)
     unidad_base = Column(String(50), default='unidad')  # Unidad de medida base
     adicional = Column(String(250))  # Descripción adicional
-    costo_unitario = Column(Float)
     stock_minimo = Column(Integer)
     stock_actual = Column(Integer)
     stock_maximo = Column(Integer, nullable=True)

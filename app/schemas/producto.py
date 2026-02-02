@@ -15,7 +15,6 @@ class ProductoBase(BaseModel):
     nombre: str
     unidad_base: Optional[str] = 'unidad'
     adicional: Optional[str] = None
-    costo_unitario: float
     stock_minimo: int
     stock_actual: int
     stock_maximo: Optional[int] = None
@@ -36,7 +35,6 @@ class ProductoUpdate(BaseModel):
     nombre: Optional[str] = None
     unidad_base: Optional[str] = None
     adicional: Optional[str] = None
-    costo_unitario: Optional[float] = None
     stock_minimo: Optional[int] = None
     stock_actual: Optional[int] = None
     stock_maximo: Optional[int] = None
