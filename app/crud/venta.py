@@ -108,13 +108,13 @@ def crear_venta(db: Session, venta: VentaCreate) -> Venta:
         descuento_aplicado = venta.descuento or Decimal(0)
         total_con_descuento = total_sin_descuento - descuento_aplicado
         
-        # 2. Crear la venta
+        # 2. Crear la venta (ignoramos totales enviados desde frontend)
         db_venta = Venta(
             id_cliente=venta.id_cliente,
-            fecha=venta.Fecha or datetime.now(),
+            fecha=venta.fecha or datetime.now(),
             descuento=descuento_aplicado,
-            totalsindescuento=total_sin_descuento,
-            totalcondescuento=total_con_descuento,
+            totalsindescuento=total_sin_descuento,  # Recalculado automáticamente
+            totalcondescuento=total_con_descuento,  # Recalculado automáticamente
             id_usuario=venta.id_usuario,
             estado=venta.estado or "CONFIRMADA"
         )

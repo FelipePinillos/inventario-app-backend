@@ -44,6 +44,7 @@ class DetalleVentaBase(BaseModel):
     cantidad: int
     precio_unitario: Decimal = Field(decimal_places=2)
     subtotal: Optional[Decimal] = Field(None, decimal_places=2)
+    id_producto: Optional[int] = None  # Campo opcional para compatibilidad con frontend
 
 class DetalleVentaCreate(DetalleVentaBase):
     """Schema para crear un detalle de venta"""
@@ -66,6 +67,11 @@ class VentaBase(BaseModel):
     descuento: Optional[Decimal] = Field(0, decimal_places=2)
     id_usuario: Optional[int] = None
     estado: Optional[str] = "CONFIRMADA"
+    # Campos opcionales que puede enviar el frontend (se recalculan automáticamente)
+    totalcondescuento: Optional[Decimal] = Field(None, decimal_places=2)
+    totalsindescuento: Optional[Decimal] = Field(None, decimal_places=2)
+    fecha_creacion: Optional[str] = None
+    fecha_edicion: Optional[str] = None
 
 class VentaCreate(VentaBase):
     """Schema para crear una venta con sus detalles"""
