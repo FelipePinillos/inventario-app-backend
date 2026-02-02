@@ -1,8 +1,15 @@
 from app.database import engine, Base
-from app.modelos import *
+from app.models import *
 
-# esta función crea las tablas en la base de datos
-#Base.metadata.create_all(bind=engine)
-#print("tablas creadas correctamente")
+# Esta función crea las tablas en la base de datos
+def crear_tablas():
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("Tablas creadas correctamente")
+    except Exception as e:
+        print(f"Error al crear tablas: {e}")
+
+if __name__ == "__main__":
+    crear_tablas()
 
 
