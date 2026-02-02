@@ -109,6 +109,7 @@ def crear_venta(db: Session, venta: VentaCreate) -> Venta:
         total_con_descuento = total_sin_descuento - descuento_aplicado
         
         # 2. Crear la venta (ignoramos totales enviados desde frontend)
+        # fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         db_venta = Venta(
             id_cliente=venta.id_cliente,
             fecha=venta.fecha or datetime.now(),
@@ -116,7 +117,9 @@ def crear_venta(db: Session, venta: VentaCreate) -> Venta:
             totalsindescuento=total_sin_descuento,  # Recalculado automáticamente
             totalcondescuento=total_con_descuento,  # Recalculado automáticamente
             id_usuario=venta.id_usuario,
-            estado=venta.estado or "CONFIRMADA"
+            estado=venta.estado or "CONFIRMADA",
+            fecha_creacion=datetime.now(),
+            fecha_edicion=None
         )
         db.add(db_venta)
         db.flush()  # Para obtener el ID de la venta
@@ -185,6 +188,9 @@ def actualizar_venta(db: Session, venta_id: int, venta: VentaUpdate) -> Optional
     update_data = venta.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(db_venta, key, value)
+    
+    # Establecer fecha de edición automáticamente (igual que usuario)
+    db_venta.fecha_edicion = datetime.now()
     
     db.commit()
     

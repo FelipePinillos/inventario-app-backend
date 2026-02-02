@@ -70,8 +70,7 @@ class VentaBase(BaseModel):
     # Campos opcionales que puede enviar el frontend (se recalculan automáticamente)
     totalcondescuento: Optional[Decimal] = Field(None, decimal_places=2)
     totalsindescuento: Optional[Decimal] = Field(None, decimal_places=2)
-    fecha_creacion: Optional[str] = None
-    fecha_edicion: Optional[str] = None
+    # fecha_creacion y fecha_edicion removidos para evitar conflictos de validación
 
 class VentaCreate(VentaBase):
     """Schema para crear una venta con sus detalles"""

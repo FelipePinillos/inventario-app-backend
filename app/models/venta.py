@@ -18,6 +18,8 @@ class Venta(Base):
     totalsindescuento = Column(DECIMAL(10, 2), nullable=True)
     id_usuario = Column(Integer, ForeignKey("usuario.id"), nullable=True)
     estado = Column(String(15), default="CONFIRMADA", nullable=False)
+    fecha_creacion = Column(String(25), nullable=False)
+    fecha_edicion = Column(String(25), nullable=True)
     
     # Relaciones
     cliente = relationship("Cliente")
