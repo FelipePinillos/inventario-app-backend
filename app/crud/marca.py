@@ -17,7 +17,9 @@ def crear_marca_db(db: Session, marca: MarcaCreate) -> Marca:
     
     db_marca = Marca(
         nombre=marca.nombre,
-        estado='A'
+        estado='A',
+        fecha_creacion=datetime.now().isoformat(),
+        fecha_edicion=None
     )
     db.add(db_marca)
     db.commit()
@@ -63,7 +65,7 @@ def actualizar_marca_db(db: Session, marca_id: int, marca_update: MarcaUpdate) -
         
         db_marca.nombre = marca_update.nombre
     
-    db_marca.fecha_edicion = datetime.now()
+    db_marca.fecha_edicion = datetime.now().isoformat()
     db.commit()
     db.refresh(db_marca)
     return db_marca
@@ -82,6 +84,6 @@ def eliminar_marca_db(db: Session, marca_id: int) -> bool:
     
     # Eliminación lógica: cambiar estado a 'I' (Inactivo)
     db_marca.estado = 'I'
-    db_marca.fecha_edicion = datetime.now()
+    db_marca.fecha_edicion = datetime.now().isoformat()
     db.commit()
     return True

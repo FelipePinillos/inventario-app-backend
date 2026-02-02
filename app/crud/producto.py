@@ -15,11 +15,11 @@ def crear_producto_db(db: Session, producto: ProductoCreate) -> Producto:
     if producto_existente:
         raise ValueError("Ya existe un producto activo con ese código")
     
+    fecha_actual = datetime.now().isoformat()
     db_producto = Producto(
         codigo=producto.codigo,
         nombre=producto.nombre,
         adicional=producto.adicional,
-        costo_unitario=producto.costo_unitario,
         stock_minimo=producto.stock_minimo,
         stock_actual=producto.stock_actual,
         stock_maximo=producto.stock_maximo,
@@ -27,7 +27,9 @@ def crear_producto_db(db: Session, producto: ProductoCreate) -> Producto:
         id_categoria=producto.id_categoria,
         id_tipo_producto=producto.id_tipo_producto,
         id_marca=producto.id_marca,
-        estado='A'
+        estado='A',
+        fecha_creacion=fecha_actual,
+        fecha_edicion=fecha_actual
     )
     db.add(db_producto)
     db.commit()
@@ -95,8 +97,6 @@ def actualizar_producto_db(db: Session, producto_id: int, producto_update: Produ
         db_producto.nombre = producto_update.nombre
     if producto_update.adicional is not None:
         db_producto.adicional = producto_update.adicional
-    if producto_update.costo_unitario is not None:
-        db_producto.costo_unitario = producto_update.costo_unitario
     if producto_update.stock_minimo is not None:
         db_producto.stock_minimo = producto_update.stock_minimo
     if producto_update.stock_actual is not None:
@@ -112,7 +112,7 @@ def actualizar_producto_db(db: Session, producto_id: int, producto_update: Produ
     if producto_update.id_marca is not None:
         db_producto.id_marca = producto_update.id_marca
     
-    db_producto.fecha_edicion = datetime.now()
+    db_producto.fecha_edicion = datetime.now().isoformat()
     db.commit()
     db.refresh(db_producto)
     return db_producto
@@ -127,7 +127,7 @@ def eliminar_producto_db(db: Session, producto_id: int) -> bool:
     
     # Eliminación lógica: cambiar estado a 'I' (Inactivo)
     db_producto.estado = 'I'
-    db_producto.fecha_edicion = datetime.now()
+    db_producto.fecha_edicion = datetime.now().isoformat()
     db.commit()
     return True
 

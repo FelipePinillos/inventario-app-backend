@@ -20,9 +20,6 @@ class MarcaUpdate(BaseModel):
 class MarcaResponse(MarcaBase):
     """Schema para respuesta de marca."""
     id: int
-    estado: str
-    fecha_creacion: datetime
-    fecha_edicion: datetime
 
     class Config:
         from_attributes = True

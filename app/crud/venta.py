@@ -17,8 +17,7 @@ def get_ventas(
         .options(
             joinedload(Venta.cliente),
             joinedload(Venta.usuario),
-            joinedload(Venta.detalles).joinedload(DetalleVenta.producto),
-            joinedload(Venta.detalles).joinedload(DetalleVenta.presentacion)
+            joinedload(Venta.detalles).joinedload(DetalleVenta.presentacion).joinedload(Presentacion.producto)
         )\
         .order_by(Venta.id.desc())\
         .offset(skip)\
@@ -31,8 +30,7 @@ def get_venta_by_id(db: Session, venta_id: int) -> Optional[Venta]:
         .options(
             joinedload(Venta.cliente),
             joinedload(Venta.usuario),
-            joinedload(Venta.detalles).joinedload(DetalleVenta.producto),
-            joinedload(Venta.detalles).joinedload(DetalleVenta.presentacion)
+            joinedload(Venta.detalles).joinedload(DetalleVenta.presentacion).joinedload(Presentacion.producto)
         )\
         .filter(Venta.id == venta_id)\
         .first()
@@ -48,8 +46,7 @@ def get_ventas_by_cliente(
         .options(
             joinedload(Venta.cliente),
             joinedload(Venta.usuario),
-            joinedload(Venta.detalles).joinedload(DetalleVenta.producto),
-            joinedload(Venta.detalles).joinedload(DetalleVenta.presentacion)
+            joinedload(Venta.detalles).joinedload(DetalleVenta.presentacion).joinedload(Presentacion.producto)
         )\
         .filter(Venta.id_cliente == cliente_id)\
         .order_by(Venta.id.desc())\
@@ -68,8 +65,7 @@ def get_ventas_by_usuario(
         .options(
             joinedload(Venta.cliente),
             joinedload(Venta.usuario),
-            joinedload(Venta.detalles).joinedload(DetalleVenta.producto),
-            joinedload(Venta.detalles).joinedload(DetalleVenta.presentacion)
+            joinedload(Venta.detalles).joinedload(DetalleVenta.presentacion).joinedload(Presentacion.producto)
         )\
         .filter(Venta.id_usuario == usuario_id)\
         .order_by(Venta.id.desc())\
@@ -89,8 +85,7 @@ def get_ventas_by_fecha(
         .options(
             joinedload(Venta.cliente),
             joinedload(Venta.usuario),
-            joinedload(Venta.detalles).joinedload(DetalleVenta.producto),
-            joinedload(Venta.detalles).joinedload(DetalleVenta.presentacion)
+            joinedload(Venta.detalles).joinedload(DetalleVenta.presentacion).joinedload(Presentacion.producto)
         )\
         .filter(Venta.fecha >= fecha_inicio, Venta.fecha <= fecha_fin)\
         .order_by(Venta.id.desc())\
@@ -128,7 +123,7 @@ def crear_venta(db: Session, venta: VentaCreate) -> Venta:
         
         # 3. Crear los detalles y descontar stock
         for detalle_data in venta.detalles:
-            # Verificar que la presentación existe
+            # Verificar que la presentación existe y obtener el producto desde ella
             presentacion = db.query(Presentacion).filter(
                 Presentacion.id == detalle_data.id_presentacion
             ).first()
@@ -136,13 +131,13 @@ def crear_venta(db: Session, venta: VentaCreate) -> Venta:
             if not presentacion:
                 raise ValueError(f"Presentación con ID {detalle_data.id_presentacion} no existe")
             
-            # Verificar que el producto existe
+            # Obtener el producto desde la presentación
             producto = db.query(Producto).filter(
-                Producto.id == detalle_data.id_producto
+                Producto.id == presentacion.id_producto
             ).first()
             
             if not producto:
-                raise ValueError(f"Producto con ID {detalle_data.id_producto} no existe")
+                raise ValueError(f"Producto asociado a la presentación {detalle_data.id_presentacion} no existe")
             
             # Calcular unidades a descontar = cantidad vendida * cantidad_base de la presentación
             unidades_a_descontar = detalle_data.cantidad * presentacion.cantidad_base
@@ -160,7 +155,6 @@ def crear_venta(db: Session, venta: VentaCreate) -> Venta:
             # Crear detalle de venta
             db_detalle = DetalleVenta(
                 id_venta=db_venta.id,
-                id_producto=detalle_data.id_producto,
                 id_presentacion=detalle_data.id_presentacion,
                 cantidad=detalle_data.cantidad,
                 precio_unitario=detalle_data.precio_unitario,
@@ -226,12 +220,14 @@ def cancelar_venta(db: Session, venta_id: int) -> Optional[Venta]:
     try:
         # Restaurar stock por cada detalle
         for detalle in db_venta.detalles:
-            producto = db.query(Producto).filter(Producto.id == detalle.id_producto).first()
             presentacion = db.query(Presentacion).filter(Presentacion.id == detalle.id_presentacion).first()
             
-            if producto and presentacion:
-                unidades_a_restaurar = detalle.cantidad * presentacion.cantidad_base
-                producto.stock_actual += unidades_a_restaurar
+            if presentacion:
+                producto = db.query(Producto).filter(Producto.id == presentacion.id_producto).first()
+                
+                if producto:
+                    unidades_a_restaurar = detalle.cantidad * presentacion.cantidad_base
+                    producto.stock_actual += unidades_a_restaurar
         
         # Cambiar estado
         db_venta.estado = "CANCELADA"

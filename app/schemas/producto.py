@@ -49,7 +49,7 @@ class PresentacionSimple(BaseModel):
     id: int
     nombre: str
     cantidad_base: int
-    precio: float
+    precio_venta: float
     estado: str
     
     class Config:
@@ -59,9 +59,6 @@ class PresentacionSimple(BaseModel):
 class ProductoResponse(ProductoBase):
     """Schema para respuesta de producto."""
     id: int
-    estado: str
-    fecha_creacion: datetime
-    fecha_edicion: datetime
     categoria: Optional[CategoriaResponse] = None
     marca: Optional[MarcaResponse] = None
     tipo_producto: Optional[TipoProductoResponse] = None
@@ -97,7 +94,7 @@ class ProductoResponse(ProductoBase):
                 "cantidad_disponible": cantidad_disponible,  # Cuántas de esta presentación
                 "unidades_totales": unidades_en_presentacion,  # Unidades en esas presentaciones
                 "unidades_sobrantes": unidades_sobrantes,  # Unidades que no completan otra presentación
-                "precio": presentacion.precio
+                "precio_venta": presentacion.precio_venta
             })
         
         # Ordenar por cantidad_base de mayor a menor

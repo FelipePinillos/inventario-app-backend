@@ -9,11 +9,8 @@ class Cliente(Base):
     nombre = Column(String(100), index=True)
     apellido = Column(String(100), index=True)
     dni = Column(String(20), unique=True, index=True)
-    edad = Column(Date)  # Fecha de nacimiento
     telefono = Column(BigInteger)  # Número entero grande
     correo = Column(String(100), unique=True, index=True)
-    sexo = Column(String(20))
-    avatar = Column(String(250), nullable=True)
     estado = Column(String(1), default='A')  # A = Activo, I = Inactivo
     fecha_creacion = Column(String(25), nullable=False)
     fecha_edicion = Column(String(25), nullable=True)

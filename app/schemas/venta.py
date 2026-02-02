@@ -33,14 +33,13 @@ class PresentacionSimple(BaseModel):
     id: int
     nombre: str
     cantidad_base: int
-    precio: Decimal
+    precio_venta: Decimal
     
     model_config = {"from_attributes": True}
 
 # ============ SCHEMAS PARA DETALLE VENTA ============
 
 class DetalleVentaBase(BaseModel):
-    id_producto: int
     id_presentacion: int
     cantidad: int
     precio_unitario: Decimal = Field(decimal_places=2)
@@ -54,8 +53,8 @@ class DetalleVentaResponse(DetalleVentaBase):
     """Schema para respuesta de detalle de venta con relaciones"""
     id: int
     id_venta: Optional[int] = None
-    producto: Optional[ProductoSimple] = None
     presentacion: Optional[PresentacionSimple] = None
+    producto: Optional[ProductoSimple] = None
     
     model_config = {"from_attributes": True}
 

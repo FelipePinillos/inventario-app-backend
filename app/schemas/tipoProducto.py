@@ -20,9 +20,6 @@ class TipoProductoUpdate(BaseModel):
 class TipoProductoResponse(TipoProductoBase):
     """Schema para respuesta de tipo de producto."""
     id: int
-    estado: str
-    fecha_creacion: datetime
-    fecha_edicion: datetime
 
     class Config:
         from_attributes = True

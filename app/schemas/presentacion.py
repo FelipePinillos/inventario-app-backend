@@ -16,7 +16,7 @@ class PresentacionBase(BaseModel):
     id_producto: int
     nombre: str
     cantidad_base: int
-    precio: float
+    precio_venta: float
 
 
 class PresentacionCreate(PresentacionBase):
@@ -28,15 +28,13 @@ class PresentacionUpdate(BaseModel):
     """Schema para actualizar presentación."""
     nombre: Optional[str] = None
     cantidad_base: Optional[int] = None
-    precio: Optional[float] = None
+    precio_venta: Optional[float] = None
     estado: Optional[str] = None
 
 
 class PresentacionResponse(PresentacionBase):
     """Schema para respuesta de presentación con información del producto."""
     id: int
-    estado: str
-    fecha_creacion: datetime
     producto: Optional[ProductoInfo] = None
     
     # Propiedades computadas para compatibilidad

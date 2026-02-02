@@ -43,9 +43,19 @@ def crear_usuario_db(db: Session, usuario: UsuarioCreate) ->Usuario:
         contrasena=usuario.password,  # TEMPORAL: Sin hashear (TODO: usar hash_password en producción)
         id_tipo_usuario=usuario.id_tipo_usuario,
         estado='A',
-        fecha_creacion=datetime.now().isoformat(),
+        fecha_creacion=datetime.now(),
         fecha_edicion=None
     )
+
+    # Debug: mostrar qué se envía a la base de datos al crear
+    print(f"=== CREANDO USUARIO ===")
+    print(f"Nombre: {db_usuario.nombre}")
+    print(f"Apellido: {db_usuario.apellido}")
+    print(f"DNI: {db_usuario.dni}")
+    print(f"Estado: {db_usuario.estado}")
+    print(f"Fecha creación: {db_usuario.fecha_creacion}")
+    print(f"Fecha edición: {db_usuario.fecha_edicion}")
+    print("=" * 40)
 
     db.add(db_usuario)
     db.commit()
@@ -80,7 +90,18 @@ def actualizar_usuario_db(db: Session, usuario_id: int, datos):
                     usuario.contrasena = value
             else:
                 setattr(usuario, key, value)
-        usuario.fecha_edicion = datetime.now().isoformat()
+        usuario.fecha_edicion = datetime.now()
+        
+        # Debug: mostrar qué se envía a la base de datos al actualizar
+        print(f"=== ACTUALIZANDO USUARIO ID {usuario_id} ===")
+        print(f"Nombre: {usuario.nombre}")
+        print(f"Apellido: {usuario.apellido}")
+        print(f"DNI: {usuario.dni}")
+        print(f"Estado: {usuario.estado}")
+        print(f"Fecha creación: {usuario.fecha_creacion}")
+        print(f"Fecha edición: {usuario.fecha_edicion}")
+        print("=" * 50)
+        
         db.commit()
         db.refresh(usuario)
 

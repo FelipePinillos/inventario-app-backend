@@ -28,11 +28,8 @@ def crear_cliente_db(db: Session, cliente: ClienteCreate) -> Cliente:
         nombre=cliente.nombre,
         apellido=cliente.apellido,
         dni=cliente.dni,
-        edad=cliente.edad,
         telefono=cliente.telefono,
         correo=cliente.correo,
-        sexo=cliente.sexo,
-        avatar=cliente.avatar,
         estado='A',
         fecha_creacion=datetime.now().isoformat(),
         fecha_edicion=None
@@ -107,14 +104,8 @@ def actualizar_cliente_db(db: Session, cliente_id: int, cliente_update: ClienteU
         db_cliente.nombre = cliente_update.nombre
     if cliente_update.apellido is not None:
         db_cliente.apellido = cliente_update.apellido
-    if cliente_update.edad is not None:
-        db_cliente.edad = cliente_update.edad
     if cliente_update.telefono is not None:
         db_cliente.telefono = cliente_update.telefono
-    if cliente_update.sexo is not None:
-        db_cliente.sexo = cliente_update.sexo
-    if cliente_update.avatar is not None:
-        db_cliente.avatar = cliente_update.avatar
     from datetime import datetime
     db_cliente.fecha_edicion = datetime.now().isoformat()
     db.commit()

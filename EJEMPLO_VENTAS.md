@@ -18,12 +18,13 @@
 ```sql
 - id (PK)
 - id_venta (FK a ventas, cascade delete)
-- id_producto (FK a producto)
 - id_presentacion (FK a presentaciones)
 - cantidad (int)
 - precio_unitario (decimal)
 - subtotal (decimal)
 ```
+
+**NOTA:** Se quitó `id_producto` porque ahora se accede al producto a través de la presentación.
 
 ## Endpoints Disponibles
 
@@ -45,21 +46,18 @@ Crea una nueva venta con sus detalles. Automáticamente:
   "estado": "CONFIRMADA",
   "detalles": [
     {
-      "id_producto": 4,
       "id_presentacion": 2,
       "cantidad": 2,
       "precio_unitario": 10.00,
       "subtotal": 20.00
     },
     {
-      "id_producto": 4,
       "id_presentacion": 11,
       "cantidad": 1,
       "precio_unitario": 200.00,
       "subtotal": 200.00
     },
     {
-      "id_producto": 4,
       "id_presentacion": 12,
       "cantidad": 1,
       "precio_unitario": 380.00,
@@ -106,61 +104,58 @@ Crea una nueva venta con sus detalles. Automáticamente:
     {
       "id": 7,
       "id_venta": 2,
-      "id_producto": 4,
       "id_presentacion": 2,
       "cantidad": 2,
       "precio_unitario": 10.00,
       "subtotal": 20.00,
-      "producto": {
-        "id": 4,
-        "codigo": "47523232",
-        "nombre": "CUADERNO CUADRICULADO A-4"
-      },
       "presentacion": {
         "id": 2,
         "nombre": "Unidad",
         "cantidad_base": 1,
         "precio": 10.00
+      },
+      "producto": {
+        "id": 4,
+        "codigo": "47523232",
+        "nombre": "CUADERNO CUADRICULADO A-4"
       }
     },
     {
       "id": 8,
       "id_venta": 2,
-      "id_producto": 4,
       "id_presentacion": 11,
       "cantidad": 1,
       "precio_unitario": 200.00,
       "subtotal": 200.00,
-      "producto": {
-        "id": 4,
-        "codigo": "47523232",
-        "nombre": "CUADERNO CUADRICULADO A-4"
-      },
       "presentacion": {
         "id": 11,
         "nombre": "Caja x 25",
         "cantidad_base": 25,
         "precio": 200.00
+      },
+      "producto": {
+        "id": 4,
+        "codigo": "47523232",
+        "nombre": "CUADERNO CUADRICULADO A-4"
       }
     },
     {
       "id": 9,
       "id_venta": 2,
-      "id_producto": 4,
       "id_presentacion": 12,
       "cantidad": 1,
       "precio_unitario": 380.00,
       "subtotal": 380.00,
-      "producto": {
-        "id": 4,
-        "codigo": "47523232",
-        "nombre": "CUADERNO CUADRICULADO A-4"
-      },
       "presentacion": {
         "id": 12,
         "nombre": "Caja x 50",
         "cantidad_base": 50,
         "precio": 380.00
+      },
+      "producto": {
+        "id": 4,
+        "codigo": "47523232",
+        "nombre": "CUADERNO CUADRICULADO A-4"
       }
     }
   ]

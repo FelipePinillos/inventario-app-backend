@@ -17,8 +17,8 @@ class Producto(Base):
     stock_maximo = Column(Integer, nullable=True)
     avatar = Column(String(250), nullable=True)  # URL de la imagen
     estado = Column(String(1), default='A')  # A = Activo, I = Inactivo
-    fecha_creacion = Column(DateTime, default=datetime.now)
-    fecha_edicion = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    fecha_creacion = Column(String(25), nullable=False)
+    fecha_edicion = Column(String(25), nullable=True)
     
     # Claves foráneas
     id_categoria = Column(Integer, ForeignKey("categoria.id"))

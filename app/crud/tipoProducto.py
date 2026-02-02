@@ -17,7 +17,9 @@ def crear_tipo_producto_db(db: Session, tipo_producto: TipoProductoCreate) -> Ti
     
     db_tipo_producto = TipoProducto(
         nombre=tipo_producto.nombre,
-        estado='A'
+        estado='A',
+        fecha_creacion=datetime.now().isoformat(),
+        fecha_edicion=None
     )
     db.add(db_tipo_producto)
     db.commit()
@@ -63,7 +65,7 @@ def actualizar_tipo_producto_db(db: Session, tipo_producto_id: int, tipo_product
         
         db_tipo_producto.nombre = tipo_producto_update.nombre
     
-    db_tipo_producto.fecha_edicion = datetime.now()
+    db_tipo_producto.fecha_edicion = datetime.now().isoformat()
     db.commit()
     db.refresh(db_tipo_producto)
     return db_tipo_producto
@@ -82,6 +84,6 @@ def eliminar_tipo_producto_db(db: Session, tipo_producto_id: int) -> bool:
     
     # Eliminación lógica: cambiar estado a 'I' (Inactivo)
     db_tipo_producto.estado = 'I'
-    db_tipo_producto.fecha_edicion = datetime.now()
+    db_tipo_producto.fecha_edicion = datetime.now().isoformat()
     db.commit()
     return True

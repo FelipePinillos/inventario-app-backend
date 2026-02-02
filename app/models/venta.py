@@ -5,7 +5,6 @@ from app.database import Base
 # Importar los modelos relacionados para que SQLAlchemy los encuentre
 from app.models.cliente import Cliente
 from app.models.usuario import Usuario
-from app.models.producto import Producto
 from app.models.presentacion import Presentacion
 
 class Venta(Base):
@@ -30,7 +29,6 @@ class DetalleVenta(Base):
     
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     id_venta = Column(Integer, ForeignKey("ventas.id", ondelete="CASCADE"), nullable=True)
-    id_producto = Column(Integer, ForeignKey("producto.id"), nullable=True)
     id_presentacion = Column(Integer, ForeignKey("presentaciones.id"), nullable=True)
     cantidad = Column(Integer, nullable=True)
     precio_unitario = Column(DECIMAL(10, 2), nullable=True)
@@ -38,5 +36,11 @@ class DetalleVenta(Base):
     
     # Relaciones
     venta = relationship("Venta", back_populates="detalles")
-    producto = relationship("Producto")
     presentacion = relationship("Presentacion")
+    
+    @property
+    def producto(self):
+        """Obtener el producto a través de la presentación"""
+        if self.presentacion:
+            return self.presentacion.producto
+        return None

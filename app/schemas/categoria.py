@@ -20,9 +20,6 @@ class CategoriaUpdate(BaseModel):
 class CategoriaResponse(CategoriaBase):
     """Schema para respuesta de categoría."""
     id: int
-    estado: str
-    fecha_creacion: datetime
-    fecha_edicion: datetime
 
     class Config:
         from_attributes = True

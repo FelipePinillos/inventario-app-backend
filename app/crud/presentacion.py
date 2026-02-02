@@ -19,7 +19,7 @@ def get_presentaciones(
     if id_producto:
         query = query.filter(Presentacion.id_producto == id_producto)
     
-    return query.offset(skip).limit(limit).all()
+    return query.order_by(Presentacion.id.desc()).offset(skip).limit(limit).all()
 
 
 def get_presentacion(db: Session, presentacion_id: int) -> Optional[Presentacion]:
@@ -31,7 +31,14 @@ def get_presentacion(db: Session, presentacion_id: int) -> Optional[Presentacion
 
 def create_presentacion(db: Session, presentacion: PresentacionCreate) -> Presentacion:
     """Crear una nueva presentación."""
-    db_presentacion = Presentacion(**presentacion.model_dump())
+    from datetime import datetime
+    fecha_actual = datetime.now().isoformat()
+    
+    db_presentacion = Presentacion(
+        **presentacion.model_dump(),
+        fecha_creacion=fecha_actual,
+        fecha_edicion=fecha_actual
+    )
     db.add(db_presentacion)
     db.commit()
     db.refresh(db_presentacion)
@@ -44,6 +51,7 @@ def update_presentacion(
     presentacion: PresentacionUpdate
 ) -> Optional[Presentacion]:
     """Actualizar una presentación existente."""
+    from datetime import datetime
     db_presentacion = get_presentacion(db, presentacion_id)
     
     if not db_presentacion:
@@ -54,6 +62,7 @@ def update_presentacion(
     for field, value in update_data.items():
         setattr(db_presentacion, field, value)
     
+    db_presentacion.fecha_edicion = datetime.now().isoformat()
     db.commit()
     db.refresh(db_presentacion)
     return db_presentacion
@@ -78,4 +87,4 @@ def get_presentaciones_by_producto(db: Session, id_producto: int) -> List[Presen
     ).filter(
         Presentacion.id_producto == id_producto,
         Presentacion.estado == 'A'
-    ).all()
+    ).order_by(Presentacion.id.desc()).all()
