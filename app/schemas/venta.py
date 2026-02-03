@@ -34,6 +34,7 @@ class PresentacionSimple(BaseModel):
     nombre: str
     cantidad_base: int
     precio_venta: Decimal
+    producto: Optional[ProductoSimple] = None
     
     model_config = {"from_attributes": True}
 
@@ -55,7 +56,6 @@ class DetalleVentaResponse(DetalleVentaBase):
     id: int
     id_venta: Optional[int] = None
     presentacion: Optional[PresentacionSimple] = None
-    producto: Optional[ProductoSimple] = None
     
     model_config = {"from_attributes": True}
 

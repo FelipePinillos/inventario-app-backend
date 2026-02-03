@@ -50,6 +50,7 @@ class PresentacionSimple(BaseModel):
     nombre: str
     cantidad_base: int
     precio_venta: float
+    precio_compra: float
     estado: str
     
     class Config:
@@ -94,7 +95,8 @@ class ProductoResponse(ProductoBase):
                 "cantidad_disponible": cantidad_disponible,  # Cuántas de esta presentación
                 "unidades_totales": unidades_en_presentacion,  # Unidades en esas presentaciones
                 "unidades_sobrantes": unidades_sobrantes,  # Unidades que no completan otra presentación
-                "precio_venta": presentacion.precio_venta
+                "precio_venta": presentacion.precio_venta,
+                "precio_compra": presentacion.precio_compra
             })
         
         # Ordenar por cantidad_base de mayor a menor

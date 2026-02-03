@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Date, DECIMAL, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, Date, DECIMAL, ForeignKey, DateTime, String
 from sqlalchemy.orm import relationship
 from app.database import Base
 import datetime
@@ -18,6 +18,7 @@ class Compra(Base):
     totalsindescuento = Column(DECIMAL(10, 2), nullable=False)
     id_usuario = Column(Integer, ForeignKey("usuario.id"), nullable=True)
     id_proveedor = Column(Integer, ForeignKey("proveedor.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=True)
+    estado = Column(String(15), default="CONFIRMADA", nullable=False)
     fecha_creacion = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     fecha_edicion = Column(DateTime, nullable=True)
     
@@ -33,8 +34,8 @@ class DetalleCompra(Base):
     id_compra = Column(Integer, ForeignKey("compras.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
     id_presentacion = Column(Integer, ForeignKey("presentaciones.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
     cantidad = Column(Integer, nullable=False)
+    precio_unitario = Column(DECIMAL(10, 2), nullable=False)
     subtotal = Column(DECIMAL(10, 2), nullable=False)
-    precio_compra = Column(DECIMAL(10, 2), nullable=False)
     fecha_creacion = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     fecha_edicion = Column(DateTime, nullable=True)
     

@@ -100,6 +100,27 @@ def actualizar_compra(
         )
     return compra_actualizada
 
+@router.put("/{compra_id}/anular", response_model=CompraResponse)
+def anular_compra(
+    compra_id: int,
+    db: Session = Depends(get_db),
+    current_user: UsuarioResponse = Depends(get_current_user)
+):
+    """Anular una compra (solo administradores)"""
+    if current_user.id_tipo_usuario != 1:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permisos para anular compras"
+        )
+    
+    compra_anulada = crud_compra.anular_compra(db, compra_id)
+    if not compra_anulada:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Compra con ID {compra_id} no encontrada"
+        )
+    return compra_anulada
+
 @router.delete("/{compra_id}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_compra(
     compra_id: int,

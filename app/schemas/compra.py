@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 from datetime import date, datetime
 from decimal import Decimal
@@ -31,10 +31,24 @@ class UsuarioSimple(BaseModel):
     class Config:
         from_attributes = True
 
+# Schema para Producto simplificado
+class ProductoSimple(BaseModel):
+    id: int
+    codigo: str
+    nombre: Optional[str]
+    unidad_base: Optional[str]
+    
+    class Config:
+        from_attributes = True
+
 # Schema para Presentacion simplificado
 class PresentacionSimple(BaseModel):
     id: int
     nombre: Optional[str]
+    cantidad_base: Optional[int]
+    precio_venta: Optional[float]
+    precio_compra: Optional[float]
+    producto: Optional[ProductoSimple] = None
     
     class Config:
         from_attributes = True
@@ -43,22 +57,28 @@ class PresentacionSimple(BaseModel):
 class DetalleCompraCreate(BaseModel):
     id_presentacion: int
     cantidad: int
-    precio_compra: Decimal = Field(..., decimal_places=2)
-    subtotal: Decimal = Field(..., decimal_places=2)
+    precio_compra: Optional[Decimal] = Field(None, decimal_places=2, alias='precio_unitario')  # Acepta precio_compra pero lo mapea a precio_unitario
+    subtotal: Optional[Decimal] = Field(None, decimal_places=2)  # Opcional, se calcula automáticamente
+    
+    class Config:
+        populate_by_name = True  # Permite usar tanto precio_compra como precio_unitario
 
 class DetalleCompraUpdate(BaseModel):
     id_presentacion: Optional[int] = None
     cantidad: Optional[int] = None
-    precio_compra: Optional[Decimal] = Field(None, decimal_places=2)
+    precio_compra: Optional[Decimal] = Field(None, decimal_places=2, alias='precio_unitario')
     subtotal: Optional[Decimal] = Field(None, decimal_places=2)
+    
+    class Config:
+        populate_by_name = True
 
 class DetalleCompraResponse(BaseModel):
     id: int
     id_compra: int
     id_presentacion: int
     cantidad: int
+    precio_unitario: Decimal
     subtotal: Decimal
-    precio_compra: Decimal
     fecha_creacion: datetime
     fecha_edicion: Optional[datetime]
     presentacion: Optional[PresentacionSimple] = None
@@ -75,7 +95,23 @@ class CompraCreate(BaseModel):
     totalsindescuento: Decimal = Field(..., decimal_places=2)
     id_usuario: Optional[int] = None
     id_proveedor: Optional[int] = None
+    estado: str = "CONFIRMADA"
     detalles: Optional[List[DetalleCompraCreate]] = []
+    
+    @field_validator('fecha_compra', 'fecha_entrega', mode='before')
+    @classmethod
+    def parse_date(cls, value):
+        if value is None:
+            return value
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, str):
+            # Si es un string con formato ISO datetime, extraer solo la fecha
+            try:
+                return datetime.fromisoformat(value.replace('Z', '+00:00')).date()
+            except:
+                return datetime.strptime(value, '%Y-%m-%d').date()
+        return value
 
 class CompraUpdate(BaseModel):
     fecha_compra: Optional[date] = None
@@ -85,6 +121,21 @@ class CompraUpdate(BaseModel):
     totalsindescuento: Optional[Decimal] = Field(None, decimal_places=2)
     id_usuario: Optional[int] = None
     id_proveedor: Optional[int] = None
+    estado: Optional[str] = None
+    
+    @field_validator('fecha_compra', 'fecha_entrega', mode='before')
+    @classmethod
+    def parse_date(cls, value):
+        if value is None:
+            return value
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value.replace('Z', '+00:00')).date()
+            except:
+                return datetime.strptime(value, '%Y-%m-%d').date()
+        return value
 
 class CompraResponse(BaseModel):
     id: int
@@ -95,6 +146,7 @@ class CompraResponse(BaseModel):
     totalsindescuento: Decimal
     id_usuario: Optional[int]
     id_proveedor: Optional[int]
+    estado: str
     fecha_creacion: datetime
     fecha_edicion: Optional[datetime]
     usuario: Optional[UsuarioSimple] = None
