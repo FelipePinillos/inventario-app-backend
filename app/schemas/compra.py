@@ -88,8 +88,8 @@ class DetalleCompraResponse(BaseModel):
 
 # Schemas para Compra
 class CompraCreate(BaseModel):
-    fecha_compra: Optional[date] = None
-    fecha_entrega: Optional[date] = None
+    fecha_compra: Optional[datetime] = None
+    fecha_entrega: Optional[datetime] = None
     totalcondescuento: Optional[Decimal] = Field(None, decimal_places=2)
     descuento: Decimal = Field(default=0.00, decimal_places=2)
     totalsindescuento: Decimal = Field(..., decimal_places=2)
@@ -114,8 +114,8 @@ class CompraCreate(BaseModel):
         return value
 
 class CompraUpdate(BaseModel):
-    fecha_compra: Optional[date] = None
-    fecha_entrega: Optional[date] = None
+    fecha_compra: Optional[datetime] = None
+    fecha_entrega: Optional[datetime] = None
     totalcondescuento: Optional[Decimal] = Field(None, decimal_places=2)
     descuento: Optional[Decimal] = Field(None, decimal_places=2)
     totalsindescuento: Optional[Decimal] = Field(None, decimal_places=2)
@@ -139,8 +139,8 @@ class CompraUpdate(BaseModel):
 
 class CompraResponse(BaseModel):
     id: int
-    fecha_compra: Optional[date]
-    fecha_entrega: Optional[date]
+    fecha_compra: Optional[datetime]
+    fecha_entrega: Optional[datetime]
     totalcondescuento: Optional[Decimal]
     descuento: Decimal
     totalsindescuento: Decimal

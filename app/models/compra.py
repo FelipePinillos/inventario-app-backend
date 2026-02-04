@@ -11,8 +11,8 @@ class Compra(Base):
     __tablename__ = "compras"
     
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    fecha_compra = Column(Date, nullable=True)
-    fecha_entrega = Column(Date, nullable=True)
+    fecha_compra = Column(DateTime, nullable=True)
+    fecha_entrega = Column(DateTime, nullable=True)
     totalcondescuento = Column(DECIMAL(10, 2), nullable=True)
     descuento = Column(DECIMAL(10, 2), nullable=False, default=0.00)
     totalsindescuento = Column(DECIMAL(10, 2), nullable=False)
