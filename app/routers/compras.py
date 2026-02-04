@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List
+from datetime import date
 from app.database import get_db
 from app.schemas.compra import CompraCreate, CompraUpdate, CompraResponse, DetalleCompraCreate, DetalleCompraUpdate, DetalleCompraResponse
 from app.crud import compra as crud_compra
@@ -21,6 +22,19 @@ def listar_compras(
 ):
     """Listar todas las compras"""
     compras = crud_compra.get_compras(db, skip=skip, limit=limit)
+    return compras
+
+@router.get("/fecha/rango", response_model=List[CompraResponse])
+def listar_compras_por_fecha(
+    fecha_inicio: date = Query(..., description="Inicio del rango (fecha de compra)"),
+    fecha_fin: date = Query(..., description="Fin del rango (fecha de compra)"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    db: Session = Depends(get_db),
+    current_user: UsuarioResponse = Depends(get_current_user)
+):
+    """Listar compras por rango de fechas (filtro por fecha_compra)"""
+    compras = crud_compra.get_compras_by_fecha(db, fecha_inicio, fecha_fin, skip=skip, limit=limit)
     return compras
 
 @router.get("/{compra_id}", response_model=CompraResponse)

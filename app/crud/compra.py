@@ -4,6 +4,7 @@ from app.models.presentacion import Presentacion
 from app.models.producto import Producto
 from app.schemas.compra import CompraCreate, CompraUpdate, DetalleCompraCreate, DetalleCompraUpdate
 from typing import Optional, List
+from datetime import date
 import datetime
 
 def get_compras(
@@ -71,6 +72,28 @@ def get_compras_by_usuario(
         .offset(skip)\
         .limit(limit)\
         .all()
+
+
+def get_compras_by_fecha(
+    db: Session,
+    fecha_inicio: date,
+    fecha_fin: date,
+    skip: int = 0,
+    limit: int = 100
+) -> List[Compra]:
+    """Obtener compras por rango de fecha de compra (fecha_compra)."""
+    return db.query(Compra)\
+        .options(
+            joinedload(Compra.usuario),
+            joinedload(Compra.proveedor),
+            joinedload(Compra.detalles).joinedload(DetalleCompra.presentacion).joinedload(Presentacion.producto)
+        )\
+        .filter(Compra.fecha_compra >= fecha_inicio, Compra.fecha_compra <= fecha_fin)\
+        .order_by(Compra.id.desc())\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
+
 
 def crear_compra(db: Session, compra: CompraCreate) -> Compra:
     """Crear una nueva compra"""
