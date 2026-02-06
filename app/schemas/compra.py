@@ -98,21 +98,7 @@ class CompraCreate(BaseModel):
     estado: str = "CONFIRMADA"
     detalles: Optional[List[DetalleCompraCreate]] = []
     
-    @field_validator('fecha_compra', 'fecha_entrega', mode='before')
-    @classmethod
-    def parse_date(cls, value):
-        if value is None:
-            return value
-        if isinstance(value, datetime):
-            return value.date()
-        if isinstance(value, str):
-            # Si es un string con formato ISO datetime, extraer solo la fecha
-            try:
-                return datetime.fromisoformat(value.replace('Z', '+00:00')).date()
-            except:
-                return datetime.strptime(value, '%Y-%m-%d').date()
-        return value
-
+    
 class CompraUpdate(BaseModel):
     fecha_compra: Optional[datetime] = None
     fecha_entrega: Optional[datetime] = None
@@ -122,20 +108,7 @@ class CompraUpdate(BaseModel):
     id_usuario: Optional[int] = None
     id_proveedor: Optional[int] = None
     estado: Optional[str] = None
-    
-    @field_validator('fecha_compra', 'fecha_entrega', mode='before')
-    @classmethod
-    def parse_date(cls, value):
-        if value is None:
-            return value
-        if isinstance(value, datetime):
-            return value.date()
-        if isinstance(value, str):
-            try:
-                return datetime.fromisoformat(value.replace('Z', '+00:00')).date()
-            except:
-                return datetime.strptime(value, '%Y-%m-%d').date()
-        return value
+
 
 class CompraResponse(BaseModel):
     id: int
