@@ -4,7 +4,7 @@ from app.models.marca import Marca
 from app.schemas.marca import MarcaCreate, MarcaUpdate
 
 
-def crear_marca_db(db: Session, marca: MarcaCreate) -> Marca:
+def crear_marca_db(db: Session, marca: MarcaCreate, current_user_id: int = None) -> Marca:
     """Crea una nueva marca."""
     # Verificar si ya existe una marca ACTIVA con el mismo nombre
     marca_existente = db.query(Marca).filter(
@@ -19,7 +19,9 @@ def crear_marca_db(db: Session, marca: MarcaCreate) -> Marca:
         nombre=marca.nombre,
         estado='A',
         fecha_creacion=datetime.now().isoformat(),
-        fecha_edicion=None
+        fecha_edicion=None,
+        created_by=current_user_id,
+        updated_by=None
     )
     db.add(db_marca)
     db.commit()
@@ -45,7 +47,7 @@ def obtener_marca_db(db: Session, marca_id: int) -> Marca | None:
     ).first()
 
 
-def actualizar_marca_db(db: Session, marca_id: int, marca_update: MarcaUpdate) -> Marca:
+def actualizar_marca_db(db: Session, marca_id: int, marca_update: MarcaUpdate, current_user_id: int = None) -> Marca:
     """Actualiza una marca."""
     db_marca = obtener_marca_db(db, marca_id)
     
@@ -66,6 +68,7 @@ def actualizar_marca_db(db: Session, marca_id: int, marca_update: MarcaUpdate) -
         db_marca.nombre = marca_update.nombre
     
     db_marca.fecha_edicion = datetime.now().isoformat()
+    db_marca.updated_by = current_user_id
     db.commit()
     db.refresh(db_marca)
     return db_marca

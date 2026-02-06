@@ -3,7 +3,7 @@ from app.models.cliente import Cliente
 from app.schemas.cliente import ClienteCreate, ClienteUpdate
 
 
-def crear_cliente_db(db: Session, cliente: ClienteCreate) -> Cliente:
+def crear_cliente_db(db: Session, cliente: ClienteCreate, current_user_id: int = None) -> Cliente:
     """Crea un nuevo cliente."""
     # Verificar si ya existe un cliente ACTIVO con el mismo DNI
     cliente_existente_dni = db.query(Cliente).filter(
@@ -32,7 +32,9 @@ def crear_cliente_db(db: Session, cliente: ClienteCreate) -> Cliente:
         correo=cliente.correo,
         estado='A',
         fecha_creacion=datetime.now().isoformat(),
-        fecha_edicion=None
+        fecha_edicion=None,
+        created_by=current_user_id,
+        updated_by=None
     )
     db.add(db_cliente)
     db.commit()
@@ -66,7 +68,7 @@ def obtener_cliente_por_dni_db(db: Session, dni: str) -> Cliente | None:
     ).first()
 
 
-def actualizar_cliente_db(db: Session, cliente_id: int, cliente_update: ClienteUpdate) -> Cliente:
+def actualizar_cliente_db(db: Session, cliente_id: int, cliente_update: ClienteUpdate, current_user_id: int = None) -> Cliente:
     """Actualiza un cliente."""
     db_cliente = obtener_cliente_db(db, cliente_id)
     
@@ -108,6 +110,7 @@ def actualizar_cliente_db(db: Session, cliente_id: int, cliente_update: ClienteU
         db_cliente.telefono = cliente_update.telefono
     from datetime import datetime
     db_cliente.fecha_edicion = datetime.now().isoformat()
+    db_cliente.updated_by = current_user_id
     db.commit()
     db.refresh(db_cliente)
     return db_cliente

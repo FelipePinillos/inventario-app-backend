@@ -3,7 +3,7 @@ from app.models.proveedor import Proveedor
 from app.schemas.proveedor import ProveedorCreate, ProveedorUpdate
 
 
-def crear_proveedor_db(db: Session, proveedor: ProveedorCreate) -> Proveedor:
+def crear_proveedor_db(db: Session, proveedor: ProveedorCreate, current_user_id: int = None) -> Proveedor:
     """Crea un nuevo proveedor."""
     # Verificar si ya existe un proveedor ACTIVO con el mismo RUC
     proveedor_existente = db.query(Proveedor).filter(
@@ -14,6 +14,7 @@ def crear_proveedor_db(db: Session, proveedor: ProveedorCreate) -> Proveedor:
     if proveedor_existente:
         raise ValueError("Ya existe un proveedor activo con ese RUC")
     
+    from datetime import datetime
     db_proveedor = Proveedor(
         razon_social=proveedor.razon_social,
         ruc=proveedor.ruc,
@@ -21,7 +22,11 @@ def crear_proveedor_db(db: Session, proveedor: ProveedorCreate) -> Proveedor:
         correo=proveedor.correo,
         direccion=proveedor.direccion,
         avatar=proveedor.avatar,
-        estado='A'
+        estado='A',
+        fecha_creacion=datetime.now().isoformat(),
+        fecha_edicion=None,
+        created_by=current_user_id,
+        updated_by=None
     )
     db.add(db_proveedor)
     db.commit()
@@ -55,7 +60,7 @@ def obtener_proveedor_por_ruc_db(db: Session, ruc: int) -> Proveedor | None:
     ).first()
 
 
-def actualizar_proveedor_db(db: Session, proveedor_id: int, proveedor_update: ProveedorUpdate) -> Proveedor:
+def actualizar_proveedor_db(db: Session, proveedor_id: int, proveedor_update: ProveedorUpdate, current_user_id: int = None) -> Proveedor:
     """Actualiza un proveedor."""
     db_proveedor = obtener_proveedor_db(db, proveedor_id)
     
@@ -87,6 +92,9 @@ def actualizar_proveedor_db(db: Session, proveedor_id: int, proveedor_update: Pr
     if proveedor_update.avatar is not None:
         db_proveedor.avatar = proveedor_update.avatar
     
+    from datetime import datetime
+    db_proveedor.fecha_edicion = datetime.now().isoformat()
+    db_proveedor.updated_by = current_user_id
     db.commit()
     db.refresh(db_proveedor)
     return db_proveedor

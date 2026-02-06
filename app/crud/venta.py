@@ -93,7 +93,7 @@ def get_ventas_by_fecha(
         .limit(limit)\
         .all()
 
-def crear_venta(db: Session, venta: VentaCreate) -> Venta:
+def crear_venta(db: Session, venta: VentaCreate, current_user_id: int = None) -> Venta:
     """
     Crear una nueva venta con sus detalles
     - Calcula automáticamente los totales
@@ -119,7 +119,9 @@ def crear_venta(db: Session, venta: VentaCreate) -> Venta:
             id_usuario=venta.id_usuario,
             estado=venta.estado or "CONFIRMADA",
             fecha_creacion=datetime.now(),
-            fecha_edicion=None
+            fecha_edicion=None,
+            created_by=current_user_id,
+            updated_by=None
         )
         db.add(db_venta)
         db.flush()  # Para obtener el ID de la venta

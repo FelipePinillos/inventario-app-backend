@@ -21,9 +21,11 @@ class Compra(Base):
     estado = Column(String(15), default="CONFIRMADA", nullable=False)
     fecha_creacion = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
     fecha_edicion = Column(DateTime, nullable=True)
+    created_by = Column(Integer, ForeignKey("usuario.id"), nullable=True)
+    updated_by = Column(Integer, ForeignKey("usuario.id"), nullable=True)
     
     # Relaciones
-    usuario = relationship("Usuario")
+    usuario = relationship("Usuario", foreign_keys="[Compra.id_usuario]")
     proveedor = relationship("Proveedor")
     detalles = relationship("DetalleCompra", back_populates="compra")
 

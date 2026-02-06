@@ -82,14 +82,8 @@ def crear_compra(
     db: Session = Depends(get_db),
     current_user: UsuarioResponse = Depends(get_current_user)
 ):
-    """Crear una nueva compra (solo administradores)"""
-    if current_user.id_tipo_usuario != 1:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permisos para crear compras"
-        )
     
-    nueva_compra = crud_compra.crear_compra(db, compra)
+    nueva_compra = crud_compra.crear_compra(db, compra, current_user_id=current_user.id)
     return nueva_compra
 
 @router.put("/{compra_id}", response_model=CompraResponse)
@@ -99,14 +93,9 @@ def actualizar_compra(
     db: Session = Depends(get_db),
     current_user: UsuarioResponse = Depends(get_current_user)
 ):
-    """Actualizar una compra existente (solo administradores)"""
-    if current_user.id_tipo_usuario != 1:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permisos para actualizar compras"
-        )
     
-    compra_actualizada = crud_compra.actualizar_compra(db, compra_id, compra)
+    
+    compra_actualizada = crud_compra.actualizar_compra(db, compra_id, compra, current_user_id=current_user.id)
     if not compra_actualizada:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -120,12 +109,7 @@ def anular_compra(
     db: Session = Depends(get_db),
     current_user: UsuarioResponse = Depends(get_current_user)
 ):
-    """Anular una compra (solo administradores)"""
-    if current_user.id_tipo_usuario != 1:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permisos para anular compras"
-        )
+    
     
     compra_anulada = crud_compra.anular_compra(db, compra_id)
     if not compra_anulada:
@@ -141,12 +125,7 @@ def eliminar_compra(
     db: Session = Depends(get_db),
     current_user: UsuarioResponse = Depends(get_current_user)
 ):
-    """Eliminar una compra (solo administradores)"""
-    if current_user.id_tipo_usuario != 1:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permisos para eliminar compras"
-        )
+   
     
     eliminada = crud_compra.eliminar_compra(db, compra_id)
     if not eliminada:
@@ -174,12 +153,6 @@ def crear_detalle_compra(
     db: Session = Depends(get_db),
     current_user: UsuarioResponse = Depends(get_current_user)
 ):
-    """Crear un detalle de compra (solo administradores)"""
-    if current_user.id_tipo_usuario != 1:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permisos para crear detalles de compra"
-        )
     
     # Verificar que la compra existe
     compra = crud_compra.get_compra_by_id(db, compra_id)
@@ -214,13 +187,7 @@ def actualizar_detalle_compra(
     db: Session = Depends(get_db),
     current_user: UsuarioResponse = Depends(get_current_user)
 ):
-    """Actualizar un detalle de compra (solo administradores)"""
-    if current_user.id_tipo_usuario != 1:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permisos para actualizar detalles de compra"
-        )
-    
+   
     detalle_actualizado = crud_compra.actualizar_detalle_compra(db, detalle_id, detalle)
     if not detalle_actualizado:
         raise HTTPException(
@@ -235,13 +202,7 @@ def eliminar_detalle_compra(
     db: Session = Depends(get_db),
     current_user: UsuarioResponse = Depends(get_current_user)
 ):
-    """Eliminar un detalle de compra (solo administradores)"""
-    if current_user.id_tipo_usuario != 1:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permisos para eliminar detalles de compra"
-        )
-    
+ 
     eliminado = crud_compra.eliminar_detalle_compra(db, detalle_id)
     if not eliminado:
         raise HTTPException(

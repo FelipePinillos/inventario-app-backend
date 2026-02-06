@@ -13,4 +13,6 @@ class Categoria(Base):
     estado = Column(String(1), default='A')  # A = Activo, I = Inactivo
     fecha_creacion = Column(String(25), nullable=False)
     fecha_edicion = Column(String(25), nullable=True)
+    created_by = Column(Integer, ForeignKey("usuario.id"), nullable=True)
+    updated_by = Column(Integer, ForeignKey("usuario.id"), nullable=True)
     productos = relationship("Producto", back_populates="categoria")

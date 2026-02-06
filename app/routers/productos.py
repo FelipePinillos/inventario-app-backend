@@ -60,7 +60,7 @@ def crear_producto(
 ):
     """Crea un nuevo producto (solo admin)."""
     try:
-        return crear_producto_db(db, producto)
+        return crear_producto_db(db, producto, current_user_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -74,7 +74,7 @@ def actualizar_producto(
 ):
     """Actualiza un producto (solo admin)."""
     try:
-        return actualizar_producto_db(db, producto_id, producto_update)
+        return actualizar_producto_db(db, producto_id, producto_update, current_user_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=404 if "no encontrado" in str(e) else 400, detail=str(e))
 

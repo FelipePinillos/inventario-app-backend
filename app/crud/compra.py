@@ -95,9 +95,11 @@ def get_compras_by_fecha(
         .all()
 
 
-def crear_compra(db: Session, compra: CompraCreate) -> Compra:
+def crear_compra(db: Session, compra: CompraCreate, current_user_id: int = None) -> Compra:
     """Crear una nueva compra"""
     compra_data = compra.model_dump(exclude={'detalles'})
+    compra_data['created_by'] = current_user_id
+    compra_data['updated_by'] = None
     db_compra = Compra(**compra_data)
     db.add(db_compra)
     db.commit()
@@ -144,7 +146,7 @@ def crear_compra(db: Session, compra: CompraCreate) -> Compra:
         .filter(Compra.id == db_compra.id)\
         .first()
 
-def actualizar_compra(db: Session, compra_id: int, compra: CompraUpdate) -> Optional[Compra]:
+def actualizar_compra(db: Session, compra_id: int, compra: CompraUpdate, current_user_id: int = None) -> Optional[Compra]:
     """Actualizar una compra existente"""
     db_compra = db.query(Compra).filter(Compra.id == compra_id).first()
     
@@ -157,6 +159,7 @@ def actualizar_compra(db: Session, compra_id: int, compra: CompraUpdate) -> Opti
         setattr(db_compra, key, value)
     
     db_compra.fecha_edicion = datetime.datetime.utcnow()
+    db_compra.updated_by = current_user_id
     db.commit()
     db.refresh(db_compra)
     

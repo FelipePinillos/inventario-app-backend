@@ -36,6 +36,11 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     return user
 
 
+def get_current_user_id(current_user = Depends(get_current_user)) -> int:
+    """Obtener solo el ID del usuario autenticado."""
+    return current_user.id
+
+
 def require_admin(current_user = Depends(get_current_user)):
     """Verificar que el usuario es admin."""
     # Por ahora solo verificamos que esté autenticado

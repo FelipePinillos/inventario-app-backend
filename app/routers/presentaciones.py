@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import get_db
+from app.deps import get_current_user
 from app.schemas.presentacion import PresentacionCreate, PresentacionUpdate, PresentacionResponse
 from app.crud import presentacion as crud_presentacion
 
@@ -59,11 +60,12 @@ def obtener_presentaciones_producto(
 @router.post("", response_model=PresentacionResponse, status_code=status.HTTP_201_CREATED)
 def crear_presentacion(
     presentacion: PresentacionCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
     """Crear una nueva presentación."""
     try:
-        return crud_presentacion.create_presentacion(db, presentacion)
+        return crud_presentacion.create_presentacion(db, presentacion, current_user_id=current_user.id)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -75,10 +77,11 @@ def crear_presentacion(
 def actualizar_presentacion(
     presentacion_id: int,
     presentacion: PresentacionUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
     """Actualizar una presentación existente."""
-    db_presentacion = crud_presentacion.update_presentacion(db, presentacion_id, presentacion)
+    db_presentacion = crud_presentacion.update_presentacion(db, presentacion_id, presentacion, current_user_id=current_user.id)
     if not db_presentacion:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

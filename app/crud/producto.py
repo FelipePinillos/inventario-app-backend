@@ -4,7 +4,7 @@ from app.models.producto import Producto
 from app.schemas.producto import ProductoCreate, ProductoUpdate
 
 
-def crear_producto_db(db: Session, producto: ProductoCreate) -> Producto:
+def crear_producto_db(db: Session, producto: ProductoCreate, current_user_id: int = None) -> Producto:
     """Crea un nuevo producto."""
     # Verificar si ya existe un producto ACTIVO con el mismo código
     producto_existente = db.query(Producto).filter(
@@ -29,7 +29,9 @@ def crear_producto_db(db: Session, producto: ProductoCreate) -> Producto:
         id_marca=producto.id_marca,
         estado='A',
         fecha_creacion=fecha_actual,
-        fecha_edicion=fecha_actual
+        fecha_edicion=fecha_actual,
+        created_by=current_user_id,
+        updated_by=None
     )
     db.add(db_producto)
     db.commit()
@@ -73,7 +75,7 @@ def obtener_producto_por_codigo_db(db: Session, codigo: str) -> Producto | None:
     ).first()
 
 
-def actualizar_producto_db(db: Session, producto_id: int, producto_update: ProductoUpdate) -> Producto:
+def actualizar_producto_db(db: Session, producto_id: int, producto_update: ProductoUpdate, current_user_id: int = None) -> Producto:
     """Actualiza un producto."""
     db_producto = obtener_producto_db(db, producto_id)
     
@@ -113,6 +115,7 @@ def actualizar_producto_db(db: Session, producto_id: int, producto_update: Produ
         db_producto.id_marca = producto_update.id_marca
     
     db_producto.fecha_edicion = datetime.now().isoformat()
+    db_producto.updated_by = current_user_id
     db.commit()
     db.refresh(db_producto)
     return db_producto

@@ -45,7 +45,7 @@ def crear_usuario(
 ):
     """Crea un nuevo usuario (solo admin)."""
     try:
-        return crear_usuario_db(db, usuario)
+        return crear_usuario_db(db, usuario, current_user_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -59,7 +59,7 @@ def actualizar_usuario(
 ):
     """Actualiza un usuario."""
     try:
-        return actualizar_usuario_db(db, usuario_id, usuario_update)
+        return actualizar_usuario_db(db, usuario_id, usuario_update, current_user_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=404 if "no encontrado" in str(e) else 400, detail=str(e))
 

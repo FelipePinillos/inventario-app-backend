@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, BigInteger
+from sqlalchemy import Column, Integer, String, Date, BigInteger, ForeignKey
 from app.database import Base
 
 
@@ -14,3 +14,5 @@ class Cliente(Base):
     estado = Column(String(1), default='A')  # A = Activo, I = Inactivo
     fecha_creacion = Column(String(25), nullable=False)
     fecha_edicion = Column(String(25), nullable=True)
+    created_by = Column(Integer, ForeignKey("usuario.id"), nullable=True)
+    updated_by = Column(Integer, ForeignKey("usuario.id"), nullable=True)

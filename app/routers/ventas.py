@@ -88,7 +88,7 @@ def crear_venta(
     - Descuenta el stock según presentaciones vendidas
     """
     try:
-        nueva_venta = crud_venta.crear_venta(db, venta)
+        nueva_venta = crud_venta.crear_venta(db, venta, current_user_id=current_user.id)
         return nueva_venta
     except ValueError as e:
         raise HTTPException(
@@ -109,14 +109,8 @@ def actualizar_venta(
     current_user: UsuarioResponse = Depends(get_current_user)
 ):
     """
-    Actualizar una venta existente (solo campos principales)
     Requiere permisos de administrador
     """
-    if current_user.id_tipo_usuario != 1:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permisos para actualizar ventas"
-        )
     
     venta_actualizada = crud_venta.actualizar_venta(db, venta_id, venta)
     if not venta_actualizada:
@@ -133,15 +127,9 @@ def eliminar_venta(
     current_user: UsuarioResponse = Depends(get_current_user)
 ):
     """
-    Eliminar una venta físicamente (solo administradores)
     ADVERTENCIA: Esto NO restaura el stock
     """
-    if current_user.id_tipo_usuario != 1:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permisos para eliminar ventas"
-        )
-    
+ 
     eliminado = crud_venta.eliminar_venta(db, venta_id)
     if not eliminado:
         raise HTTPException(
@@ -160,11 +148,7 @@ def cancelar_venta(
     Cancelar una venta (cambia estado a CANCELADA y restaura stock)
     Solo administradores
     """
-    if current_user.id_tipo_usuario != 1:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permisos para cancelar ventas"
-        )
+    # Permiso controlado desde el frontend
     
     try:
         venta_cancelada = crud_venta.cancelar_venta(db, venta_id)

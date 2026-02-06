@@ -4,7 +4,7 @@ from app.models.tipoProducto import TipoProducto
 from app.schemas.tipoProducto import TipoProductoCreate, TipoProductoUpdate
 
 
-def crear_tipo_producto_db(db: Session, tipo_producto: TipoProductoCreate) -> TipoProducto:
+def crear_tipo_producto_db(db: Session, tipo_producto: TipoProductoCreate, current_user_id: int = None) -> TipoProducto:
     """Crea un nuevo tipo de producto."""
     # Verificar si ya existe un tipo de producto ACTIVO con el mismo nombre
     tipo_existente = db.query(TipoProducto).filter(
@@ -19,7 +19,9 @@ def crear_tipo_producto_db(db: Session, tipo_producto: TipoProductoCreate) -> Ti
         nombre=tipo_producto.nombre,
         estado='A',
         fecha_creacion=datetime.now().isoformat(),
-        fecha_edicion=None
+        fecha_edicion=None,
+        created_by=current_user_id,
+        updated_by=None
     )
     db.add(db_tipo_producto)
     db.commit()
@@ -45,7 +47,7 @@ def obtener_tipo_producto_db(db: Session, tipo_producto_id: int) -> TipoProducto
     ).first()
 
 
-def actualizar_tipo_producto_db(db: Session, tipo_producto_id: int, tipo_producto_update: TipoProductoUpdate) -> TipoProducto:
+def actualizar_tipo_producto_db(db: Session, tipo_producto_id: int, tipo_producto_update: TipoProductoUpdate, current_user_id: int = None) -> TipoProducto:
     """Actualiza un tipo de producto."""
     db_tipo_producto = obtener_tipo_producto_db(db, tipo_producto_id)
     
@@ -66,6 +68,7 @@ def actualizar_tipo_producto_db(db: Session, tipo_producto_id: int, tipo_product
         db_tipo_producto.nombre = tipo_producto_update.nombre
     
     db_tipo_producto.fecha_edicion = datetime.now().isoformat()
+    db_tipo_producto.updated_by = current_user_id
     db.commit()
     db.refresh(db_tipo_producto)
     return db_tipo_producto

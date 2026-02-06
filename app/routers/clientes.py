@@ -60,7 +60,7 @@ def crear_cliente(
 ):
     """Crea un nuevo cliente."""
     try:
-        return crear_cliente_db(db, cliente)
+        return crear_cliente_db(db, cliente, current_user_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -74,7 +74,7 @@ def actualizar_cliente(
 ):
     """Actualiza un cliente."""
     try:
-        return actualizar_cliente_db(db, cliente_id, cliente_update)
+        return actualizar_cliente_db(db, cliente_id, cliente_update, current_user_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=404 if "no encontrado" in str(e) else 400, detail=str(e))
 

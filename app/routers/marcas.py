@@ -46,7 +46,7 @@ def crear_marca(
 ):
     """Crea una nueva marca (solo admin)."""
     try:
-        return crear_marca_db(db, marca)
+        return crear_marca_db(db, marca, current_user_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -60,7 +60,7 @@ def actualizar_marca(
 ):
     """Actualiza una marca (solo admin)."""
     try:
-        return actualizar_marca_db(db, marca_id, marca_update)
+        return actualizar_marca_db(db, marca_id, marca_update, current_user_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=404 if "no encontrada" in str(e) else 400, detail=str(e))
 

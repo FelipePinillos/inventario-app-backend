@@ -24,7 +24,7 @@ from sqlalchemy import or_ # importar or_ para consultas complejas
 
 # el objetivo de esto es simplificar la creación de instancias de la clase Usuario
 # y pasar de un esquema Pydantic a un modelo SQLAlchemy.
-def crear_usuario_db(db: Session, usuario: UsuarioCreate) ->Usuario:
+def crear_usuario_db(db: Session, usuario: UsuarioCreate, current_user_id: int = None) ->Usuario:
 
     existe = db.query(Usuario).filter(
         Usuario.dni == usuario.dni
@@ -44,7 +44,9 @@ def crear_usuario_db(db: Session, usuario: UsuarioCreate) ->Usuario:
         id_tipo_usuario=usuario.id_tipo_usuario,
         estado='A',
         fecha_creacion=datetime.now(),
-        fecha_edicion=None
+        fecha_edicion=None,
+        created_by=current_user_id,
+        updated_by=None
     )
 
     # Debug: mostrar qué se envía a la base de datos al crear
@@ -78,7 +80,7 @@ def obtener_usuario_db(db: Session, usuario_id: int = None, usuario: str = None)
 
 
 
-def actualizar_usuario_db(db: Session, usuario_id: int, datos):
+def actualizar_usuario_db(db: Session, usuario_id: int, datos, current_user_id: int = None):
     usuario = obtener_usuario_db(db, usuario_id)
 
     if usuario:
@@ -91,6 +93,7 @@ def actualizar_usuario_db(db: Session, usuario_id: int, datos):
             else:
                 setattr(usuario, key, value)
         usuario.fecha_edicion = datetime.now()
+        usuario.updated_by = current_user_id
         
         # Debug: mostrar qué se envía a la base de datos al actualizar
         print(f"=== ACTUALIZANDO USUARIO ID {usuario_id} ===")

@@ -60,7 +60,7 @@ def crear_proveedor(
 ):
     """Crea un nuevo proveedor (solo admin)."""
     try:
-        return crear_proveedor_db(db, proveedor)
+        return crear_proveedor_db(db, proveedor, current_user_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -74,7 +74,7 @@ def actualizar_proveedor(
 ):
     """Actualiza un proveedor (solo admin)."""
     try:
-        return actualizar_proveedor_db(db, proveedor_id, proveedor_update)
+        return actualizar_proveedor_db(db, proveedor_id, proveedor_update, current_user_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=404 if "no encontrado" in str(e) else 400, detail=str(e))
 

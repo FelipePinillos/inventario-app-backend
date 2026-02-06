@@ -29,7 +29,7 @@ def get_presentacion(db: Session, presentacion_id: int) -> Optional[Presentacion
     ).filter(Presentacion.id == presentacion_id).first()
 
 
-def create_presentacion(db: Session, presentacion: PresentacionCreate) -> Presentacion:
+def create_presentacion(db: Session, presentacion: PresentacionCreate, current_user_id: int = None) -> Presentacion:
     """Crear una nueva presentación."""
     from datetime import datetime
     fecha_actual = datetime.now().isoformat()
@@ -37,7 +37,9 @@ def create_presentacion(db: Session, presentacion: PresentacionCreate) -> Presen
     db_presentacion = Presentacion(
         **presentacion.model_dump(),
         fecha_creacion=fecha_actual,
-        fecha_edicion=fecha_actual
+        fecha_edicion=fecha_actual,
+        created_by=current_user_id,
+        updated_by=None
     )
     db.add(db_presentacion)
     db.commit()
@@ -48,7 +50,8 @@ def create_presentacion(db: Session, presentacion: PresentacionCreate) -> Presen
 def update_presentacion(
     db: Session, 
     presentacion_id: int, 
-    presentacion: PresentacionUpdate
+    presentacion: PresentacionUpdate,
+    current_user_id: int = None
 ) -> Optional[Presentacion]:
     """Actualizar una presentación existente."""
     from datetime import datetime
@@ -63,6 +66,7 @@ def update_presentacion(
         setattr(db_presentacion, field, value)
     
     db_presentacion.fecha_edicion = datetime.now().isoformat()
+    db_presentacion.updated_by = current_user_id
     db.commit()
     db.refresh(db_presentacion)
     return db_presentacion

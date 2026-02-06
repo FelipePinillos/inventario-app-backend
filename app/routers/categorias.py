@@ -46,7 +46,7 @@ def crear_categoria(
 ):
     """Crea una nueva categoría (solo admin)."""
     try:
-        return crear_categoria_db(db, categoria)
+        return crear_categoria_db(db, categoria, current_user_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -60,7 +60,7 @@ def actualizar_categoria(
 ):
     """Actualiza una categoría (solo admin)."""
     try:
-        return actualizar_categoria_db(db, categoria_id, categoria_update)
+        return actualizar_categoria_db(db, categoria_id, categoria_update, current_user_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=404 if "no encontrada" in str(e) else 400, detail=str(e))
 

@@ -4,7 +4,7 @@ from app.models.categoria import Categoria
 from app.schemas.categoria import CategoriaCreate, CategoriaUpdate
 
 
-def crear_categoria_db(db: Session, categoria: CategoriaCreate) -> Categoria:
+def crear_categoria_db(db: Session, categoria: CategoriaCreate, current_user_id: int = None) -> Categoria:
     """Crea una nueva categoría."""
     # Verificar si ya existe una categoría ACTIVA con el mismo nombre
     categoria_existente = (
@@ -21,6 +21,8 @@ def crear_categoria_db(db: Session, categoria: CategoriaCreate) -> Categoria:
         estado="A",
         fecha_creacion=datetime.now(),
         fecha_edicion=None,
+        created_by=current_user_id,
+        updated_by=None
     )
     
     # Debug: mostrar qué se envía a la base de datos al crear
@@ -59,7 +61,7 @@ def obtener_categoria_db(db: Session, categoria_id: int) -> Categoria | None:
 
 
 def actualizar_categoria_db(
-    db: Session, categoria_id: int, categoria_update: CategoriaUpdate
+    db: Session, categoria_id: int, categoria_update: CategoriaUpdate, current_user_id: int = None
 ) -> Categoria:
     """Actualiza una categoría."""
     db_categoria = obtener_categoria_db(db, categoria_id)
@@ -85,6 +87,7 @@ def actualizar_categoria_db(
         db_categoria.nombre = categoria_update.nombre
 
     db_categoria.fecha_edicion = datetime.now()
+    db_categoria.updated_by = current_user_id
     
     # Debug: mostrar qué se envía a la base de datos
     print(f"=== EDITANDO CATEGORÍA ID {categoria_id} ===")

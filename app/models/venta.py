@@ -20,10 +20,12 @@ class Venta(Base):
     estado = Column(String(15), default="CONFIRMADA", nullable=False)
     fecha_creacion = Column(String(25), nullable=False)
     fecha_edicion = Column(String(25), nullable=True)
+    created_by = Column(Integer, ForeignKey("usuario.id"), nullable=True)
+    updated_by = Column(Integer, ForeignKey("usuario.id"), nullable=True)
     
     # Relaciones
     cliente = relationship("Cliente")
-    usuario = relationship("Usuario")
+    usuario = relationship("Usuario", foreign_keys="[Venta.id_usuario]")
     detalles = relationship("DetalleVenta", back_populates="venta", cascade="all, delete-orphan")
 
 class DetalleVenta(Base):
