@@ -75,7 +75,7 @@ def get_ventas_by_usuario(
 
 def get_ventas_by_fecha(
     db: Session,
-    fecha_innicio,
+    fecha_inicio,
     fecha_fin,
     skip: int = 0,
     limit: int = 100
