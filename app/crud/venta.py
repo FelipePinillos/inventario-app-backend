@@ -202,7 +202,7 @@ def actualizar_venta(db: Session, venta_id: int, venta: VentaUpdate) -> Optional
 def eliminar_venta(db: Session, venta_id: int) -> bool:
     """
     Eliminar una venta (eliminación física)
-    IMPORTANTE: Esto NO restaura el stock. Considera cambiar a estado="CANCELADA"
+    IMPORTANTE: Esto NO restaura el stock. Considera cambiar a estado="anulada"
     """
     db_venta = db.query(Venta).filter(Venta.id == venta_id).first()
     
@@ -213,17 +213,17 @@ def eliminar_venta(db: Session, venta_id: int) -> bool:
     db.commit()
     return True
 
-def cancelar_venta(db: Session, venta_id: int) -> Optional[Venta]:
+def anular_venta(db: Session, venta_id: int) -> Optional[Venta]:
     """
-    Cancelar una venta (cambiar estado a CANCELADA y restaurar stock)
+    anular una venta (cambiar estado a anulada y restaurar stock)
     """
     db_venta = get_venta_by_id(db, venta_id)
     
     if not db_venta:
         return None
     
-    if db_venta.estado == "CANCELADA":
-        return db_venta  # Ya está cancelada
+    if db_venta.estado == "ANULADA":
+        return db_venta  # Ya está anulada
     
     try:
         # Restaurar stock por cada detalle
@@ -238,7 +238,7 @@ def cancelar_venta(db: Session, venta_id: int) -> Optional[Venta]:
                     producto.stock_actual += unidades_a_restaurar
         
         # Cambiar estado
-        db_venta.estado = "CANCELADA"
+        db_venta.estado = "ANULADA"
         
         db.commit()
         return get_venta_by_id(db, venta_id)

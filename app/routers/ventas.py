@@ -138,28 +138,28 @@ def eliminar_venta(
         )
     return None
 
-@router.patch("/{venta_id}/cancelar", response_model=VentaResponse)
-def cancelar_venta(
+@router.patch("/{venta_id}/anular", response_model=VentaResponse)
+def anular_venta(
     venta_id: int,
     db: Session = Depends(get_db),
     current_user: UsuarioResponse = Depends(get_current_user)
 ):
     """
-    Cancelar una venta (cambia estado a CANCELADA y restaura stock)
+    anular una venta (cambia estado a ANULADA y restaura stock)
     Solo administradores
     """
     # Permiso controlado desde el frontend
     
     try:
-        venta_cancelada = crud_venta.cancelar_venta(db, venta_id)
-        if not venta_cancelada:
+        venta_anulada = crud_venta.anular_venta(db, venta_id)
+        if not venta_anulada:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Venta con ID {venta_id} no encontrada"
             )
-        return venta_cancelada
+        return venta_anulada
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al cancelar la venta: {str(e)}"
+            detail=f"Error al anular la venta: {str(e)}"
         )
