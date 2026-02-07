@@ -76,8 +76,8 @@ def get_compras_by_usuario(
 
 def get_compras_by_fecha(
     db: Session,
-    fecha_inicio: date,
-    fecha_fin: date,
+    fecha_inicio,
+    fecha_fin,
     skip: int = 0,
     limit: int = 100
 ) -> List[Compra]:
