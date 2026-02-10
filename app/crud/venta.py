@@ -112,6 +112,8 @@ def crear_venta(db: Session, venta: VentaCreate, current_user_id: int = None) ->
         # fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         db_venta = Venta(
             id_cliente=venta.id_cliente,
+            cliente_nombre=venta.cliente_nombre,
+            cliente_dni=venta.cliente_dni,
             fecha=venta.fecha or datetime.now(),
             descuento=descuento_aplicado,
             totalsindescuento=total_sin_descuento,  # Recalculado automáticamente
@@ -186,7 +188,7 @@ def actualizar_venta(db: Session, venta_id: int, venta: VentaUpdate) -> Optional
     if not db_venta:
         return None
     
-    # Actualizar solo los campos proporcionados
+    # Actualizar solo los campos proporcionados, incluyendo cliente_nombre y cliente_dni
     update_data = venta.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(db_venta, key, value)

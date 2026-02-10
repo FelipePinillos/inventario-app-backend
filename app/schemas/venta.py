@@ -63,6 +63,8 @@ class DetalleVentaResponse(DetalleVentaBase):
 
 class VentaBase(BaseModel):
     id_cliente: Optional[int] = None
+    cliente_nombre: Optional[str] = None
+    cliente_dni: Optional[str] = None
     fecha: Optional[datetime] = None
     descuento: Optional[Decimal] = Field(0, decimal_places=2)
     id_usuario: Optional[int] = None
@@ -86,6 +88,8 @@ class VentaCreate(VentaBase):
 class VentaUpdate(BaseModel):
     """Schema para actualizar una venta (sin detalles)"""
     id_cliente: Optional[int] = None
+    cliente_nombre: Optional[str] = None
+    cliente_dni: Optional[str] = None
     fecha: Optional[datetime] = None
     descuento: Optional[Decimal] = Field(None, decimal_places=2)
     id_usuario: Optional[int] = None

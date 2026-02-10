@@ -22,6 +22,8 @@ class Venta(Base):
     fecha_edicion = Column(String(25), nullable=True)
     created_by = Column(Integer, ForeignKey("usuario.id"), nullable=True)
     updated_by = Column(Integer, ForeignKey("usuario.id"), nullable=True)
+    cliente_nombre = Column(String(100), nullable=True)
+    cliente_dni = Column(String(20), nullable=True)
     
     # Relaciones
     cliente = relationship("Cliente")
