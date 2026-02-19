@@ -40,7 +40,8 @@ def crear_usuario_db(db: Session, usuario: UsuarioCreate, current_user_id: int =
         nombre=usuario.nombre,
         apellido=usuario.apellido,
         dni=usuario.dni,
-        contrasena=usuario.password,  # TEMPORAL: Sin hashear (TODO: usar hash_password en producción)
+        #contrasena=usuario.password,  # TEMPORAL: Sin hashear (TODO: usar hash_password en producción)
+        contrasena=hash_password(usuario.password),
         id_tipo_usuario=usuario.id_tipo_usuario,
         estado='A',
         fecha_creacion=datetime.now(),
@@ -89,7 +90,8 @@ def actualizar_usuario_db(db: Session, usuario_id: int, datos, current_user_id: 
         for key, value in data.items():
             if key == "password":
                 if value:  # Solo actualizar si se envía un valor no vacío
-                    usuario.contrasena = value
+                    #usuario.contrasena = value
+                    usuario.contrasena = hash_password(value)
             else:
                 setattr(usuario, key, value)
         usuario.fecha_edicion = datetime.now()

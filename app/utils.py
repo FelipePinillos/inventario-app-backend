@@ -9,6 +9,4 @@ def hash_password(password: str):
 
 
 def verify_password(password: str, hashed: str):
-    # TEMPORAL: Comparación de contraseña en texto plano
-    # TODO: Cambiar a bcrypt en producción
-    return password == hashed
+    return pwd_context.verify(password, hashed)
