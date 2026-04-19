@@ -1,0 +1,2 @@
+# Este directorio almacena los modelos de Machine Learning entrenados (.pkl).
+# Los archivos .pkl son generados en tiempo de ejecución y están en .gitignore.

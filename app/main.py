@@ -5,7 +5,7 @@ Punto de inicio de la API.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
-from app.routers import auth, usuarios, categorias, productos, marcas, tiposProducto, clientes, proveedores, compras, ventas, upload, presentaciones
+from app.routers import auth, usuarios, categorias, productos, marcas, tiposProducto, clientes, proveedores, compras, ventas, upload, presentaciones, predicciones
 from app.database import engine, Base
 
 # Crear tablas en la base de datos
@@ -43,6 +43,7 @@ app.include_router(productos.router)
 app.include_router(presentaciones.router)
 app.include_router(compras.router)
 app.include_router(ventas.router)
+app.include_router(predicciones.router)
 app.include_router(upload.router, prefix="/api/v1/upload", tags=["Upload"])
 
 
