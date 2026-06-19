@@ -13,12 +13,16 @@ Flujo:
 
 import logging
 import os
+import time
 import joblib
+from copy import deepcopy
 import numpy as np
 import pandas as pd
 from datetime import date, timedelta
-from typing import List, Dict, Optional
+from threading import RLock
+from typing import List, Dict, Optional, Tuple, Any
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split, cross_val_score
@@ -37,6 +41,8 @@ MODEL_DIR = os.path.join(_BASE_DIR, "..", "..", "..", "models_storage")
 MODEL_PATH = os.path.join(MODEL_DIR, "rf_demanda.pkl")
 
 MIN_MUESTRAS = 2  # Mínimo de filas para poder entrenar
+PREDICCION_CACHE_TTL_SECONDS = int(os.getenv("PREDICCION_CACHE_TTL_SECONDS", "300"))
+PREDICCION_CACHE_MAX_ITEMS = int(os.getenv("PREDICCION_CACHE_MAX_ITEMS", "256"))
 
 FEATURE_COLS = [
     "id_producto",
@@ -61,6 +67,121 @@ NOMBRES_MESES = {
 # ---------------------------------------------------------------------------
 
 logger = logging.getLogger(__name__)
+
+_cache_lock = RLock()
+_prediccion_cache: Dict[Tuple[Any, ...], Dict[str, Any]] = {}
+_prediccion_cache_stats = {"hits": 0, "misses": 0}
+_modelo_cache: Dict[str, Any] = {"mtime": None, "modelo": None}
+
+
+def _modelo_mtime() -> Optional[float]:
+    if not os.path.exists(MODEL_PATH):
+        return None
+    return os.path.getmtime(MODEL_PATH)
+
+
+def _obtener_version_datos_producto(db: Session, producto_id: int) -> Tuple[Any, ...]:
+    """
+    Firma liviana de los datos que afectan la predicción del producto.
+    Si cambian ventas confirmadas o stock, cambia la llave de caché.
+    """
+    fila = (
+        db.query(
+            func.count(DetalleVenta.id),
+            func.coalesce(func.sum(DetalleVenta.cantidad), 0),
+            func.max(Venta.fecha),
+            Producto.stock_actual,
+            Producto.stock_minimo,
+        )
+        .join(Venta, DetalleVenta.id_venta == Venta.id)
+        .join(Presentacion, DetalleVenta.id_presentacion == Presentacion.id)
+        .join(Producto, Presentacion.id_producto == Producto.id)
+        .filter(Presentacion.id_producto == producto_id)
+        .filter(Venta.estado == "CONFIRMADA")
+        .filter(Venta.fecha.isnot(None))
+        .group_by(Producto.stock_actual, Producto.stock_minimo)
+        .first()
+    )
+    if not fila:
+        return (0, 0.0, None, None, None)
+
+    total_registros, total_cantidad, ultima_fecha, stock_actual, stock_minimo = fila
+    ultima_fecha_key = ultima_fecha.isoformat() if ultima_fecha else None
+    return (
+        int(total_registros or 0),
+        float(total_cantidad or 0),
+        ultima_fecha_key,
+        int(stock_actual or 0),
+        int(stock_minimo or 0),
+    )
+
+
+def _obtener_cache_prediccion(clave: Tuple[Any, ...]) -> Optional[Dict]:
+    if PREDICCION_CACHE_TTL_SECONDS <= 0:
+        return None
+
+    ahora = time.monotonic()
+    with _cache_lock:
+        entrada = _prediccion_cache.get(clave)
+        if not entrada:
+            _prediccion_cache_stats["misses"] += 1
+            return None
+
+        if entrada["expira_en"] <= ahora:
+            _prediccion_cache.pop(clave, None)
+            _prediccion_cache_stats["misses"] += 1
+            return None
+
+        _prediccion_cache_stats["hits"] += 1
+        return deepcopy(entrada["valor"])
+
+
+def _guardar_cache_prediccion(clave: Tuple[Any, ...], valor: Dict) -> None:
+    if PREDICCION_CACHE_TTL_SECONDS <= 0:
+        return
+
+    with _cache_lock:
+        if len(_prediccion_cache) >= PREDICCION_CACHE_MAX_ITEMS:
+            clave_mas_antigua = min(
+                _prediccion_cache,
+                key=lambda item: _prediccion_cache[item]["creado_en"],
+            )
+            _prediccion_cache.pop(clave_mas_antigua, None)
+
+        ahora = time.monotonic()
+        _prediccion_cache[clave] = {
+            "valor": deepcopy(valor),
+            "creado_en": ahora,
+            "expira_en": ahora + PREDICCION_CACHE_TTL_SECONDS,
+        }
+
+
+def limpiar_cache_predicciones() -> Dict:
+    """Limpia resultados cacheados de predicciones."""
+    with _cache_lock:
+        total = len(_prediccion_cache)
+        _prediccion_cache.clear()
+        _prediccion_cache_stats["hits"] = 0
+        _prediccion_cache_stats["misses"] = 0
+    return {"mensaje": "Cache de predicciones limpiada.", "items_eliminados": total}
+
+
+def estado_cache_predicciones() -> Dict:
+    """Devuelve estadísticas básicas de la caché de predicciones."""
+    with _cache_lock:
+        ahora = time.monotonic()
+        expirados = sum(
+            1 for item in _prediccion_cache.values() if item["expira_en"] <= ahora
+        )
+        return {
+            "habilitada": PREDICCION_CACHE_TTL_SECONDS > 0,
+            "ttl_segundos": PREDICCION_CACHE_TTL_SECONDS,
+            "max_items": PREDICCION_CACHE_MAX_ITEMS,
+            "items": len(_prediccion_cache),
+            "items_expirados": expirados,
+            "hits": _prediccion_cache_stats["hits"],
+            "misses": _prediccion_cache_stats["misses"],
+        }
 
 
 def _obtener_historial_ventas(db: Session) -> pd.DataFrame:
@@ -193,9 +314,18 @@ def _calcular_tendencia(cantidades: List[float]) -> str:
 
 def _cargar_modelo() -> Optional[RandomForestRegressor]:
     """Carga el modelo guardado en disco. Devuelve None si no existe."""
-    if os.path.exists(MODEL_PATH):
-        return joblib.load(MODEL_PATH)
-    return None
+    mtime = _modelo_mtime()
+    if mtime is None:
+        return None
+
+    with _cache_lock:
+        if _modelo_cache["modelo"] is not None and _modelo_cache["mtime"] == mtime:
+            return _modelo_cache["modelo"]
+
+        modelo = joblib.load(MODEL_PATH)
+        _modelo_cache["mtime"] = mtime
+        _modelo_cache["modelo"] = modelo
+        return modelo
 
 
 # ---------------------------------------------------------------------------
@@ -279,6 +409,10 @@ def entrenar_modelo(db: Session) -> Dict:
 
     os.makedirs(MODEL_DIR, exist_ok=True)
     joblib.dump(modelo, MODEL_PATH)
+    limpiar_cache_predicciones()
+    with _cache_lock:
+        _modelo_cache["mtime"] = _modelo_mtime()
+        _modelo_cache["modelo"] = modelo
 
     resultado = {
         "mensaje": "Modelo entrenado y guardado correctamente.",
@@ -307,6 +441,17 @@ def predecir_demanda_producto(
             "error": "El modelo no ha sido entrenado. "
             "Llame a POST /api/v1/predicciones/entrenar primero."
         }
+
+    clave_cache = (
+        "demanda_producto",
+        producto_id,
+        semanas,
+        _modelo_mtime(),
+        _obtener_version_datos_producto(db, producto_id),
+    )
+    resultado_cacheado = _obtener_cache_prediccion(clave_cache)
+    if resultado_cacheado is not None:
+        return resultado_cacheado
 
     df = _obtener_historial_ventas(db)
     if df.empty:
@@ -422,7 +567,7 @@ def predecir_demanda_producto(
     media_global = float(np.mean(cantidades_predichas)) if cantidades_predichas else 1.0
     confianza_modelo = round(float(np.mean(rangos)) / (media_global + 1e-6), 4)
 
-    return {
+    resultado = {
         "producto_id": producto_id,
         "nombre_producto": nombre_producto,
         "stock_actual": stock_actual,
@@ -435,6 +580,8 @@ def predecir_demanda_producto(
         "tendencia": tendencia,
         "confianza_modelo": confianza_modelo,
     }
+    _guardar_cache_prediccion(clave_cache, resultado)
+    return resultado
 
 
 def obtener_alertas_reabastecimiento(db: Session, semanas: int = 4) -> List[Dict]:

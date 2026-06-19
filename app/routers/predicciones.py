@@ -35,6 +35,22 @@ def estado_modelo(
     return svc.estado_modelo()
 
 
+@router.get("/cache/estado")
+def estado_cache_predicciones(
+    current_user: UsuarioResponse = Depends(get_current_user),
+):
+    """Consulta el estado y estadisticas de la cache de predicciones."""
+    return svc.estado_cache_predicciones()
+
+
+@router.delete("/cache")
+def limpiar_cache_predicciones(
+    current_user: UsuarioResponse = Depends(get_current_user),
+):
+    """Limpia manualmente la cache de predicciones."""
+    return svc.limpiar_cache_predicciones()
+
+
 @router.get("/diagnostico")
 def diagnostico_datos(
     db: Session = Depends(get_db),

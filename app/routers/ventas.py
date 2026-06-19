@@ -7,6 +7,7 @@ from app.schemas.venta import VentaCreate, VentaUpdate, VentaResponse
 from app.crud import venta as crud_venta
 from app.deps import get_current_user
 from app.schemas.usuario import UsuarioResponse
+from app.services.ml import prediccion_service
 
 router = APIRouter(
     prefix="/api/v1/ventas",
@@ -89,6 +90,7 @@ def crear_venta(
     """
     try:
         nueva_venta = crud_venta.crear_venta(db, venta, current_user_id=current_user.id)
+        prediccion_service.limpiar_cache_predicciones()
         return nueva_venta
     except ValueError as e:
         raise HTTPException(
@@ -118,6 +120,7 @@ def actualizar_venta(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Venta con ID {venta_id} no encontrada"
         )
+    prediccion_service.limpiar_cache_predicciones()
     return venta_actualizada
 
 @router.delete("/{venta_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -136,6 +139,7 @@ def eliminar_venta(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Venta con ID {venta_id} no encontrada"
         )
+    prediccion_service.limpiar_cache_predicciones()
     return None
 
 @router.patch("/{venta_id}/anular", response_model=VentaResponse)
@@ -157,6 +161,7 @@ def anular_venta(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Venta con ID {venta_id} no encontrada"
             )
+        prediccion_service.limpiar_cache_predicciones()
         return venta_anulada
     except Exception as e:
         raise HTTPException(
