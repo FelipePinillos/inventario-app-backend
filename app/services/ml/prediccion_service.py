@@ -6,10 +6,12 @@ Flujo:
   2. Agrega cantidades por producto y semana ISO.
   3. Genera features de rezago (lag) y ventanas móviles.
   4. Entrena un RandomForestRegressor global (un modelo para todos los productos).
-  5. Genera predicciones semanales futuras por producto.
-  6. Detecta alertas de reabastecimiento.
+  5. Genera predicciones semanales futuras por producto con intervalos de confianza.
+  6. Detecta alertas de reabastecimiento con tendencia.
+  7. Expone historial, importancia de features y dashboard KPIs.
 """
 
+import logging
 import os
 import joblib
 import numpy as np
@@ -43,14 +45,22 @@ FEATURE_COLS = [
     "lag_1",
     "lag_2",
     "lag_4",
-    "rolling_mean_4",
-    "rolling_std_4",
+    "rolling_mean_4", # <--- AQUÍ: El promedio móvil de 4 semanas
+    "rolling_std_4",   # <--- (Y aquí la desviación estándar móvil)
 ]
 TARGET_COL = "cantidad_vendida"
+
+NOMBRES_MESES = {
+    1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
+    5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
+    9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre",
+}
 
 # ---------------------------------------------------------------------------
 # Helpers internos
 # ---------------------------------------------------------------------------
+
+logger = logging.getLogger(__name__)
 
 
 def _obtener_historial_ventas(db: Session) -> pd.DataFrame:
@@ -93,6 +103,7 @@ def _obtener_historial_ventas(db: Session) -> pd.DataFrame:
             "stock_minimo",
         ],
     )
+    
     df["fecha"] = pd.to_datetime(df["fecha"])
 
     # Extraer componentes de semana ISO
@@ -143,6 +154,41 @@ def _crear_features(df: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame()
 
     return pd.concat(grupos, ignore_index=True)
+
+
+def _predecir_con_intervalo(modelo: RandomForestRegressor, X_pred: pd.DataFrame) -> Dict:
+    """
+    Usa los árboles individuales del RF para estimar un intervalo de confianza.
+    Retorna media, std, percentil 10 (min) y percentil 90 (max).
+    """
+    X_pred_array = X_pred.to_numpy()
+    preds_arboles = np.array([tree.predict(X_pred_array)[0] for tree in modelo.estimators_])
+    return {
+        "media": float(np.mean(preds_arboles)),
+        "std": float(np.std(preds_arboles)),
+        "min": float(max(0.0, float(np.percentile(preds_arboles, 10)))),
+        "max": float(np.percentile(preds_arboles, 90)),
+    }
+
+
+def _calcular_tendencia(cantidades: List[float]) -> str:
+    """
+    Compara la media de la primera mitad vs la segunda mitad de las predicciones.
+    Retorna CRECIENTE, DECRECIENTE o ESTABLE (umbral ±10 %).
+    """
+    if len(cantidades) < 2:
+        return "ESTABLE"
+    mitad = len(cantidades) // 2
+    primera = float(np.mean(cantidades[:mitad])) if mitad > 0 else 0.0
+    segunda = float(np.mean(cantidades[mitad:])) if mitad < len(cantidades) else 0.0
+    if primera < 1e-6:
+        return "ESTABLE"
+    diff_pct = (segunda - primera) / primera
+    if diff_pct > 0.10:
+        return "CRECIENTE"
+    elif diff_pct < -0.10:
+        return "DECRECIENTE"
+    return "ESTABLE"
 
 
 def _cargar_modelo() -> Optional[RandomForestRegressor]:
@@ -252,10 +298,8 @@ def predecir_demanda_producto(
     db: Session, producto_id: int, semanas: int = 4
 ) -> Dict:
     """
-    Predice la demanda semanal para un producto específico durante las
-    próximas `semanas` semanas.
-
-    Retorna un dict con la predicción detallada o un mensaje de error.
+    Predice la demanda semanal de un producto para las próximas N semanas.
+    Incluye intervalo de confianza (min/max por árbol RF), tendencia y vista mensual.
     """
     modelo = _cargar_modelo()
     if modelo is None:
@@ -282,25 +326,24 @@ def predecir_demanda_producto(
     stock_actual = int(df_prod["stock_actual"].iloc[-1])
     stock_minimo = int(df_prod["stock_minimo"].iloc[-1])
 
-    # Buffer con el historial de cantidades (rellenado con 0 si hay poco historial)
     historial = df_prod["cantidad_vendida"].tolist()
     if len(historial) < 4:
         historial = [0.0] * (4 - len(historial)) + historial
-    buffer = list(historial[-8:])  # Últimas 8 semanas como ventana deslizante
+    buffer = list(historial[-8:])
 
     ultimo_año = int(df_prod["año"].iloc[-1])
     ultima_semana = int(df_prod["semana"].iloc[-1])
 
     predicciones = []
+    cantidades_predichas = []
+    acumulado_mensual: Dict[tuple, Dict] = {}  # (año, mes) → acumulador
 
     for i in range(semanas):
-        # Avanzar una semana
         ultima_semana += 1
         if ultima_semana > 52:
             ultima_semana = 1
             ultimo_año += 1
 
-        # Mes aproximado desde número de semana ISO
         mes = min(12, max(1, round((ultima_semana - 1) / 4.33) + 1))
 
         lag_1 = float(buffer[-1])
@@ -310,24 +353,23 @@ def predecir_demanda_producto(
         rolling_std_4 = float(np.std(buffer[-4:])) if len(buffer) >= 4 else 0.0
 
         X_pred = pd.DataFrame(
-            [
-                {
-                    "id_producto": producto_id,
-                    "mes": mes,
-                    "semana": ultima_semana,
-                    "lag_1": lag_1,
-                    "lag_2": lag_2,
-                    "lag_4": lag_4,
-                    "rolling_mean_4": rolling_mean_4,
-                    "rolling_std_4": rolling_std_4,
-                }
-            ]
+            [{
+                "id_producto": producto_id,
+                "mes": mes,
+                "semana": ultima_semana,
+                "lag_1": lag_1,
+                "lag_2": lag_2,
+                "lag_4": lag_4,
+                "rolling_mean_4": rolling_mean_4,
+                "rolling_std_4": rolling_std_4,
+            }]
         )
 
-        cantidad_predicha = max(0.0, float(modelo.predict(X_pred)[0]))
+        intervalo = _predecir_con_intervalo(modelo, X_pred)
+        cantidad_predicha = max(0.0, intervalo["media"])
         buffer.append(cantidad_predicha)
+        cantidades_predichas.append(cantidad_predicha)
 
-        # Convertir semana ISO → fechas reales
         try:
             fecha_inicio = date.fromisocalendar(ultimo_año, ultima_semana, 1)
             fecha_fin = date.fromisocalendar(ultimo_año, ultima_semana, 7)
@@ -342,6 +384,30 @@ def predecir_demanda_producto(
                 "fecha_inicio": fecha_inicio.isoformat(),
                 "fecha_fin": fecha_fin.isoformat(),
                 "cantidad_predicha": round(cantidad_predicha, 2),
+                "cantidad_min": round(intervalo["min"], 2),
+                "cantidad_max": round(intervalo["max"], 2),
+            }
+        )
+
+        # Acumular en vista mensual
+        clave = (ultimo_año, mes)
+        if clave not in acumulado_mensual:
+            acumulado_mensual[clave] = {"suma": 0.0, "min": 0.0, "max": 0.0}
+        acumulado_mensual[clave]["suma"] += cantidad_predicha
+        acumulado_mensual[clave]["min"] += intervalo["min"]
+        acumulado_mensual[clave]["max"] += intervalo["max"]
+
+    # Vista mensual agregada
+    predicciones_mensuales = []
+    for (anio, mes), vals in sorted(acumulado_mensual.items()):
+        predicciones_mensuales.append(
+            {
+                "mes": mes,
+                "año": anio,
+                "nombre_mes": NOMBRES_MESES.get(mes, str(mes)),
+                "cantidad_predicha": round(vals["suma"], 2),
+                "cantidad_min": round(vals["min"], 2),
+                "cantidad_max": round(vals["max"], 2),
             }
         )
 
@@ -349,6 +415,12 @@ def predecir_demanda_producto(
     stock_disponible = max(0, stock_actual - stock_minimo)
     necesita_reabastecimiento = total_predicho > stock_disponible
     cantidad_a_pedir = max(0.0, total_predicho - stock_disponible)
+    tendencia = _calcular_tendencia(cantidades_predichas)
+
+    # Coeficiente de variación promedio como proxy de incertidumbre del modelo
+    rangos = [p["cantidad_max"] - p["cantidad_min"] for p in predicciones]
+    media_global = float(np.mean(cantidades_predichas)) if cantidades_predichas else 1.0
+    confianza_modelo = round(float(np.mean(rangos)) / (media_global + 1e-6), 4)
 
     return {
         "producto_id": producto_id,
@@ -356,9 +428,12 @@ def predecir_demanda_producto(
         "stock_actual": stock_actual,
         "stock_minimo": stock_minimo,
         "predicciones": predicciones,
+        "predicciones_mensuales": predicciones_mensuales,
         "total_predicho": round(total_predicho, 2),
         "necesita_reabastecimiento": necesita_reabastecimiento,
         "cantidad_a_pedir": round(cantidad_a_pedir, 2),
+        "tendencia": tendencia,
+        "confianza_modelo": confianza_modelo,
     }
 
 
@@ -408,6 +483,7 @@ def obtener_alertas_reabastecimiento(db: Session, semanas: int = 4) -> List[Dict
                 "demanda_predicha_proximas_semanas": resultado["total_predicho"],
                 "cantidad_a_pedir": resultado["cantidad_a_pedir"],
                 "urgencia": urgencia,
+                "tendencia": resultado.get("tendencia", "ESTABLE"),
             }
         )
 
@@ -462,4 +538,158 @@ def diagnostico_datos(db: Session) -> Dict:
         "minimo_requerido": MIN_MUESTRAS,
         "puede_entrenar": len(df_feat) >= MIN_MUESTRAS,
         "productos": resumen.to_dict(orient="records"),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Nuevas funciones de análisis y dashboard
+# ---------------------------------------------------------------------------
+
+
+def obtener_historico_producto(db: Session, producto_id: int, semanas: int = 12) -> Dict:
+    """
+    Devuelve las últimas N semanas de ventas reales de un producto.
+    Útil para renderizar el gráfico histórico en el frontend.
+    """
+    df = _obtener_historial_ventas(db)
+    if df.empty:
+        return {"error": "No hay datos de ventas disponibles."}
+
+    df_prod = (
+        df[df["id_producto"] == producto_id]
+        .sort_values(["año", "semana"])
+        .tail(semanas)
+        .reset_index(drop=True)
+    )
+    if df_prod.empty:
+        return {
+            "error": f"No se encontraron ventas confirmadas para el producto ID {producto_id}."
+        }
+
+    nombre_producto = str(df_prod["nombre_producto"].iloc[-1])
+    historial = []
+    for _, row in df_prod.iterrows():
+        try:
+            fecha_inicio = date.fromisocalendar(int(row["año"]), int(row["semana"]), 1)
+            fecha_fin = date.fromisocalendar(int(row["año"]), int(row["semana"]), 7)
+        except ValueError:
+            continue
+        historial.append(
+            {
+                "semana": int(row["semana"]),
+                "año": int(row["año"]),
+                "fecha_inicio": fecha_inicio.isoformat(),
+                "fecha_fin": fecha_fin.isoformat(),
+                "cantidad_vendida": float(row["cantidad_vendida"]),
+            }
+        )
+
+    cantidades = df_prod["cantidad_vendida"].tolist()
+    return {
+        "producto_id": producto_id,
+        "nombre_producto": nombre_producto,
+        "historial": historial,
+        "promedio_semanal": round(float(np.mean(cantidades)), 2) if cantidades else 0.0,
+        "maximo_semanal": round(float(np.max(cantidades)), 2) if cantidades else 0.0,
+        "minimo_semanal": round(float(np.min(cantidades)), 2) if cantidades else 0.0,
+    }
+
+
+def predecir_todos_productos(db: Session, semanas: int = 4) -> List[Dict]:
+    """
+    Genera un resumen de predicción para todos los productos con historial.
+    Útil para el dashboard general del frontend (tabla/tarjetas de productos).
+    """
+    modelo = _cargar_modelo()
+    if modelo is None:
+        return []
+
+    df = _obtener_historial_ventas(db)
+    if df.empty:
+        return []
+    logger.info("Productos con historial de ventas: %s", df["id_producto"].nunique())
+
+    producto_ids = df["id_producto"].unique().tolist()
+    resultados = []
+
+    for pid in producto_ids:
+        res = predecir_demanda_producto(db, pid, semanas=semanas)
+        if "error" in res:
+            continue
+
+        stock_actual = res["stock_actual"]
+        stock_minimo = res["stock_minimo"]
+        urgencia = None
+        if res["necesita_reabastecimiento"]:
+            if stock_actual <= stock_minimo:
+                urgencia = "CRITICO"
+            elif stock_actual <= stock_minimo * 1.5:
+                urgencia = "ALTO"
+            else:
+                urgencia = "MEDIO"
+
+        resultados.append(
+            {
+                "producto_id": pid,
+                "nombre_producto": res["nombre_producto"],
+                "stock_actual": stock_actual,
+                "stock_minimo": stock_minimo,
+                "total_predicho": res["total_predicho"],
+                "necesita_reabastecimiento": res["necesita_reabastecimiento"],
+                "urgencia": urgencia,
+                "tendencia": res["tendencia"],
+            }
+        )
+
+    return resultados
+
+
+def obtener_importancia_features() -> Dict:
+    """
+    Devuelve la importancia relativa de cada feature del modelo RandomForest.
+    Permite al frontend mostrar qué variables influyen más en la predicción.
+    """
+    modelo = _cargar_modelo()
+    if modelo is None:
+        return {"error": "El modelo no ha sido entrenado aún."}
+
+    importancias = modelo.feature_importances_
+    total = importancias.sum()
+    features = [
+        {
+            "feature": feat,
+            "importancia": round(float(imp), 6),
+            "importancia_porcentaje": round(float(imp / total) * 100, 2),
+        }
+        for feat, imp in sorted(
+            zip(FEATURE_COLS, importancias), key=lambda x: x[1], reverse=True
+        )
+    ]
+    return {"features": features}
+
+
+def obtener_resumen_dashboard(db: Session, semanas: int = 4) -> Dict:
+    """
+    Resumen ejecutivo para el dashboard del frontend:
+      - Estado del modelo y fecha de último entrenamiento.
+      - Conteo de alertas por nivel de urgencia (CRITICO / ALTO / MEDIO).
+      - Lista compacta de todos los productos predichos con tendencia.
+    """
+    estado = estado_modelo()
+    alertas = obtener_alertas_reabastecimiento(db, semanas=semanas)
+    todos = predecir_todos_productos(db, semanas=semanas)
+
+    conteo: Dict[str, int] = {"CRITICO": 0, "ALTO": 0, "MEDIO": 0}
+    for a in alertas:
+        nivel = a.get("urgencia", "MEDIO")
+        conteo[nivel] = conteo.get(nivel, 0) + 1
+
+    return {
+        "total_productos_con_historial": len(todos),
+        "alertas_criticas": conteo["CRITICO"],
+        "alertas_altas": conteo["ALTO"],
+        "alertas_medias": conteo["MEDIO"],
+        "modelo_entrenado": estado.get("entrenado", False),
+        "ultima_actualizacion": estado.get("ultima_actualizacion"),
+        "productos_predichos": todos,
     }

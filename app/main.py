@@ -2,6 +2,8 @@
 Archivo de entrada de la aplicación FastAPI.
 Punto de inicio de la API.
 """
+import app.logger  # configure global logging antes de crear la app
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
